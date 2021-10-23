@@ -103,6 +103,62 @@ void nop()
 {
 }
 
+void br_close();
+
+void br_open()
+{
+    /*
+            let mut i = 1;
+        let mut ppc = self.pc + 1;
+        while ppc < self.programlist.len() {
+            let v = self.programlist.get(ppc).unwrap();
+            match v {
+                Instr::Number(_) => {}
+                Instr::String(_) => {}
+                Instr::Func(_) => {}
+                Instr::OpenBrace => {
+                    i += 1;
+                }
+                Instr::CloseBrace => {
+                    i -= 1;
+                    if i == 0 {
+                        // found it!
+                        self.pc = ppc; // will be incremented later!
+                        return;
+                    }
+                }
+            }
+            ppc += 1;
+        }
+        panic!("No matching brace found!");
+        */
+    int i = 1;
+    int pc = ppc + 1;
+    while (pc < programSize)
+    {
+        if (program[pc].type == invoke_function && program[pc].function_pointer == &br_open)
+        {
+            i += 1;
+        }
+        else if (program[pc].type == invoke_function && program[pc].function_pointer == &br_close)
+        {
+            i -= 1;
+            if (i == 0)
+            {
+                // found it!
+                ppc = pc;
+                return;
+            }
+        }
+        pc += 1;
+    }
+}
+
+void br_close()
+{
+    // nop
+}
+
 void pop()
 {
     _pop();
@@ -411,6 +467,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("stacksize", &i_stacksize);
                 bind_function("jz", &jz);
                 bind_function("jgz", &jgz);
+                bind_function("{", &br_open);
+                bind_function("}", &br_close);
             }
         }
         piPointer += 1;
