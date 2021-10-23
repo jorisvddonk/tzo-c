@@ -64,5 +64,6 @@ int main(int argc, char *argv[])
   }
 
   printf("Done! Tests OK!\n");
+  printf(".\n");
   return (0);
 }

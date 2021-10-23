@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "thirdparty/json.h"
 #include <assert.h>
 #include <time.h>
+#include <math.h>
+#include "thirdparty/json.h"
 #include "tzo.h"
 
 Value *makeString(char *str)
@@ -198,6 +199,53 @@ void and ()
     _push(*makeNumber(0));
 }
 
+void dup()
+{
+    Value a = _pop();
+    _push(a);
+    _push(a);
+}
+
+void gt()
+{
+    Value a = _pop();
+    Value b = _pop();
+    if (a.type == Number && b.type == Number)
+    {
+        if (a.number_value > b.number_value)
+        {
+            _push(*makeNumber(1));
+            return;
+        }
+        else
+        {
+            _push(*makeNumber(0));
+            return;
+        }
+    }
+    _push(*makeNumber(0));
+}
+
+void lt()
+{
+    Value a = _pop();
+    Value b = _pop();
+    if (a.type == Number && b.type == Number)
+    {
+        if (a.number_value > b.number_value)
+        {
+            _push(*makeNumber(1));
+            return;
+        }
+        else
+        {
+            _push(*makeNumber(0));
+            return;
+        }
+    }
+    _push(*makeNumber(0));
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -276,6 +324,9 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("randInt", &randInt);
                 bind_function("eq", &eq);
                 bind_function("and", &and);
+                bind_function("dup", &dup);
+                bind_function("gt", &gt);
+                bind_function("lt", &lt);
             }
         }
         piPointer += 1;
