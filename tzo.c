@@ -125,7 +125,7 @@ void rconcat()
 {
     Value a = _pop();
     Value b = _pop();
-    Value *c = makeString(strcat(asString(a), asString(b)));
+    Value *c = makeString(strcat(asString(b), asString(a)));
     _push(*c);
 }
 
