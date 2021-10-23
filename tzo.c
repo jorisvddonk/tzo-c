@@ -42,6 +42,14 @@ Value _popS()
     return val;
 }
 
+float asInt_f(Value val)
+{
+    if (fabsf(roundf(val.number_value) - val.number_value) <= 0.00001f)
+    {
+        return roundf(val.number_value);
+    }
+}
+
 char *asString(Value val)
 {
     if (val.type == String)
@@ -246,6 +254,26 @@ void lt()
     _push(*makeNumber(0));
 }
 
+void jgz()
+{
+    Value a = _pop();
+    assert(("jgz: value must be number", a.type == Number));
+    if (asInt_f(a) > 0)
+    {
+        ppc += 1;
+    }
+}
+
+void jz()
+{
+    Value a = _pop();
+    assert(("jz: value must be number", a.type == Number));
+    if (asInt_f(a) == 0)
+    {
+        ppc += 1;
+    }
+}
+
 void or ()
 {
     Value a = _pop();
@@ -381,6 +409,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("or", & or);
                 bind_function("ppc", &i_ppc);
                 bind_function("stacksize", &i_stacksize);
+                bind_function("jz", &jz);
+                bind_function("jgz", &jgz);
             }
         }
         piPointer += 1;
