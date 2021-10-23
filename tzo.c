@@ -107,31 +107,6 @@ void br_close();
 
 void br_open()
 {
-    /*
-            let mut i = 1;
-        let mut ppc = self.pc + 1;
-        while ppc < self.programlist.len() {
-            let v = self.programlist.get(ppc).unwrap();
-            match v {
-                Instr::Number(_) => {}
-                Instr::String(_) => {}
-                Instr::Func(_) => {}
-                Instr::OpenBrace => {
-                    i += 1;
-                }
-                Instr::CloseBrace => {
-                    i -= 1;
-                    if i == 0 {
-                        // found it!
-                        self.pc = ppc; // will be incremented later!
-                        return;
-                    }
-                }
-            }
-            ppc += 1;
-        }
-        panic!("No matching brace found!");
-        */
     int i = 1;
     int pc = ppc + 1;
     while (pc < programSize)
@@ -390,6 +365,20 @@ void exit()
     exited = true;
 }
 
+void i_goto()
+{
+    Value a = _pop();
+    if (a.type == Number)
+    {
+        int i = (int)(asInt_f(a)) - 1;
+        ppc = i;
+    }
+    else if (a.type == String)
+    {
+        // TODO: get from LabelMap.
+    }
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -482,6 +471,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("}", &br_close);
                 bind_function("pause", &pause);
                 bind_function("exit", &exit);
+                bind_function("goto", &i_goto);
             }
         }
         piPointer += 1;
@@ -505,7 +495,7 @@ void step()
         //printf("->FUNC\n");
         program[ppc].function_pointer();
     }
-    ppc += 1;
+    ppc = ppc + 1;
 }
 
 void run()
