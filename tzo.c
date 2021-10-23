@@ -136,6 +136,38 @@ void randInt()
     _push(*b);
 }
 
+void eq()
+{
+    Value a = _pop();
+    Value b = _pop();
+    if (a.type != b.type)
+    {
+        _push(*makeNumber(0));
+    }
+    else if (a.type == String)
+    {
+        if (strcmp(a.string_value, b.string_value) == 0)
+        {
+            _push(*makeNumber(1));
+        }
+        else
+        {
+            _push(*makeNumber(0));
+        }
+    }
+    else if (a.type == Number)
+    {
+        if (a.number_value == b.number_value)
+        {
+            _push(*makeNumber(1));
+        }
+        else
+        {
+            _push(*makeNumber(0));
+        }
+    }
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -212,6 +244,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("rconcat", &rconcat);
                 bind_function("charCode", &charCode);
                 bind_function("randInt", &randInt);
+                bind_function("eq", &eq);
             }
         }
         piPointer += 1;
