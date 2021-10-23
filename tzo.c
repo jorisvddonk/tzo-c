@@ -285,6 +285,16 @@ void not()
     _push(*makeNumber(0));
 }
 
+void i_ppc()
+{
+    _push(*makeNumber((float)ppc));
+}
+
+void i_stacksize()
+{
+    _push(*makeNumber((float)stackSize));
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -349,6 +359,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
             }
             if (0 == strcmp(oe->name->string, "functionName"))
             {
+                bind_function("nop", &nop);
                 bind_function("plus", &plus);
                 bind_function("+", &plus);
                 bind_function("min", &min);
@@ -368,6 +379,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("lt", &lt);
                 bind_function("not", &not );
                 bind_function("or", & or);
+                bind_function("ppc", &i_ppc);
+                bind_function("stacksize", &i_stacksize);
             }
         }
         piPointer += 1;
