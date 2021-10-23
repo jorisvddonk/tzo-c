@@ -1,5 +1,17 @@
 [
   {
+    "type": "push-number-instruction",
+    "value": 10
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "randInt"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "stdout"
+  },
+  {
     "type": "invoke-function-instruction",
     "functionName": "{"
   },
