@@ -48,6 +48,7 @@ float asInt_f(Value val)
     {
         return roundf(val.number_value);
     }
+    return val.number_value;
 }
 
 char *asString(Value val)
