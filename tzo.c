@@ -379,6 +379,17 @@ void i_stacksize()
     _push(*makeNumber((float)stackSize));
 }
 
+void pause()
+{
+    running = false;
+}
+
+void exit()
+{
+    running = false;
+    exited = true;
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -469,6 +480,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("jgz", &jgz);
                 bind_function("{", &br_open);
                 bind_function("}", &br_close);
+                bind_function("pause", &pause);
+                bind_function("exit", &exit);
             }
         }
         piPointer += 1;
