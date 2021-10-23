@@ -232,7 +232,46 @@ void lt()
     Value b = _pop();
     if (a.type == Number && b.type == Number)
     {
-        if (a.number_value > b.number_value)
+        if (a.number_value < b.number_value)
+        {
+            _push(*makeNumber(1));
+            return;
+        }
+        else
+        {
+            _push(*makeNumber(0));
+            return;
+        }
+    }
+    _push(*makeNumber(0));
+}
+
+void or ()
+{
+    Value a = _pop();
+    Value b = _pop();
+    if (a.type == Number && b.type == Number)
+    {
+        if (a.number_value == 0 && b.number_value == 0)
+        {
+            _push(*makeNumber(0));
+            return;
+        }
+        else
+        {
+            _push(*makeNumber(1));
+            return;
+        }
+    }
+    _push(*makeNumber(0));
+}
+
+void not()
+{
+    Value a = _pop();
+    if (a.type == Number)
+    {
+        if (a.number_value == 0)
         {
             _push(*makeNumber(1));
             return;
@@ -327,6 +366,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("dup", &dup);
                 bind_function("gt", &gt);
                 bind_function("lt", &lt);
+                bind_function("not", &not );
+                bind_function("or", & or);
             }
         }
         piPointer += 1;
