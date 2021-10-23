@@ -49,10 +49,20 @@ char *asString(Value val)
     }
     else
     {
-        size_t needed = snprintf(NULL, 0, "%f", val.number_value) + 1;
-        char *buffer = malloc(needed);
-        sprintf(buffer, "%f", val.number_value);
-        return buffer;
+        if (fabsf(roundf(val.number_value) - val.number_value) <= 0.00001f)
+        {
+            size_t needed = snprintf(NULL, 0, "%i", (int)val.number_value) + 1;
+            char *buffer = malloc(needed);
+            sprintf(buffer, "%i", (int)val.number_value);
+            return buffer;
+        }
+        else
+        {
+            size_t needed = snprintf(NULL, 0, "%f", val.number_value) + 1;
+            char *buffer = malloc(needed);
+            sprintf(buffer, "%f", val.number_value);
+            return buffer;
+        }
     }
 }
 
