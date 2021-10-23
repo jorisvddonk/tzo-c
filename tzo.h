@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "thirdparty/hashmap.h"
 
 #ifndef TZO_H
 #define TZO_H
@@ -49,6 +50,7 @@ extern int programSize;
 extern int ppc;
 extern bool running;
 extern bool exited;
+extern struct hashmap_s labelmap;
 
 void run();
 void step();

@@ -9,6 +9,7 @@ int programSize;
 int ppc;
 bool running;
 bool exited;
+struct hashmap_s labelmap;
 
 int main()
 {

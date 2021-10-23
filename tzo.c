@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include "thirdparty/json.h"
+#include "thirdparty/hashmap.h"
 #include "tzo.h"
 
 Value *makeString(char *str)
@@ -376,8 +377,34 @@ void i_goto()
     }
     else if (a.type == String)
     {
-        // TODO: get from LabelMap.
+        int i = hashmap_get(&labelmap, a.string_value, strlen(a.string_value));
+        ppc = i - 1;
     }
+}
+
+void i_setContext()
+{
+    Value a = _pop();
+    Value b = _pop();
+    if (a.type == Number && b.type == Number)
+    {
+        if (a.number_value < b.number_value)
+        {
+            _push(*makeNumber(1));
+            return;
+        }
+        else
+        {
+            _push(*makeNumber(0));
+            return;
+        }
+    }
+    _push(*makeNumber(0));
+}
+
+void i_getContext()
+{
+    // todo
 }
 
 struct json_value_s *loadFileGetJSON(char *filename)
@@ -398,6 +425,12 @@ struct json_value_s *loadFileGetJSON(char *filename)
 
 void initProgramListFromJSONArray(struct json_array_s *array)
 {
+    const unsigned initial_size = 64;
+    if (0 != hashmap_create(initial_size, &labelmap))
+    {
+        assert(("failed to create hashmap", 0));
+    }
+
     program = malloc(array->length * sizeof *program);
     stack = malloc(TZO_MAX_STACK_SIZE * sizeof *stack);
     stackSize = 0;
@@ -406,6 +439,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
     int piPointer = 0;
     for (struct json_array_element_s *elem = array->start; elem != NULL; elem = elem->next)
     {
+
         // set defaults:
         program[piPointer].type = invoke_function;
         program[piPointer].function_pointer = &nop;
@@ -427,6 +461,11 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 {
                     program[piPointer].type = invoke_function;
                 }
+            }
+            if (0 == strcmp(oe->name->string, "label"))
+            {
+                char *key = json_value_as_string(oe->value)->string;
+                hashmap_put(&labelmap, key, strlen(key), piPointer);
             }
             if (0 == strcmp(oe->name->string, "value"))
             {
@@ -473,6 +512,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("pause", &pause);
                 bind_function("exit", &i_exit);
                 bind_function("goto", &i_goto);
+                bind_function("setContext", &i_setContext);
+                bind_function("getContext", &i_getContext);
             }
         }
         piPointer += 1;
