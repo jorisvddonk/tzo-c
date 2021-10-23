@@ -3,59 +3,7 @@
 #include "thirdparty/json.h"
 #include <assert.h>
 #include <time.h>
-#include <stdbool.h>
-
-#define TZO_MAX_STACK_SIZE 1000
-#define bind_function(X, Y)                                      \
-    if (0 == strcmp(json_value_as_string(oe->value)->string, X)) \
-    {                                                            \
-        program[piPointer].function_pointer = Y;                 \
-    }
-#define throw(X) \
-    printf(X);   \
-    exit(-1);
-
-typedef enum
-{
-    push_string = 0,
-    push_number = 1,
-    invoke_function = 2,
-} InstructionType;
-
-typedef enum
-{
-    String = 0,
-    Number = 1,
-} ValueType;
-
-typedef struct
-{
-    ValueType type;
-    char *string_value;
-    float number_value;
-} Value;
-
-typedef struct
-{
-    InstructionType type;
-    Value *value;
-    void (*function_pointer)();
-} TzoInstr;
-
-/////////////////////////////////////////////////
-
-TzoInstr *program;
-Value *stack;
-int stackSize;
-int programSize;
-int ppc;
-bool running = false;
-bool exited = false;
-
-/////////////////////////////////////////////////
-
-void run();
-void step();
+#include "tzo.h"
 
 Value *makeString(char *str)
 {
@@ -188,27 +136,24 @@ void randInt()
     _push(*b);
 }
 
-int main()
+struct json_value_s *loadFileGetJSON(char *filename)
 {
-    srand(time(NULL));
-
-    FILE *f = fopen("test.json", "rb");
+    FILE *f = fopen(filename, "rb");
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET); /* same as rewind(f); */
+    fseek(f, 0, SEEK_SET);
 
     char *inputjson = malloc(fsize + 1);
     fread(inputjson, 1, fsize, f);
     fclose(f);
 
     inputjson[fsize] = 0;
-    //printf("%s\n", inputjson);
-
     struct json_value_s *root = json_parse(inputjson, strlen(inputjson));
+    return root;
+}
 
-    struct json_array_s *array = json_value_as_array(root);
-    //printf("%lu\n", array->length);
-
+void initProgramListFromJSONArray(struct json_array_s *array)
+{
     program = malloc(array->length * sizeof *program);
     stack = malloc(TZO_MAX_STACK_SIZE * sizeof *stack);
     stackSize = 0;
@@ -271,9 +216,6 @@ int main()
         }
         piPointer += 1;
     }
-
-    run();
-    return (0);
 }
 
 void step()
