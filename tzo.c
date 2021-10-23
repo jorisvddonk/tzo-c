@@ -360,7 +360,7 @@ void pause()
     running = false;
 }
 
-void exit()
+void i_exit()
 {
     running = false;
     exited = true;
@@ -471,7 +471,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("{", &br_open);
                 bind_function("}", &br_close);
                 bind_function("pause", &pause);
-                bind_function("exit", &exit);
+                bind_function("exit", &i_exit);
                 bind_function("goto", &i_goto);
             }
         }
