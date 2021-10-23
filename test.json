@@ -1,0 +1,82 @@
+[
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "{"
+  },
+  {
+    "type": "push-number-instruction",
+    "value": 42
+  },
+  {
+    "type": "push-number-instruction",
+    "value": 69
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "{"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "plus"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "stdout"
+  },
+  {
+    "type": "push-string-instruction",
+    "value": "hello"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "stdout"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "}"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "}"
+  },
+  {
+    "type": "push-number-instruction",
+    "value": 65
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "charCode"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "stdout"
+  },
+  {
+    "type": "push-number-instruction",
+    "value": 12
+  },
+  {
+    "type": "push-string-instruction",
+    "value": "hello"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "setContext"
+  },
+  {
+    "type": "push-string-instruction",
+    "value": "hello"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "getContext"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "stdout"
+  },
+  {
+    "type": "invoke-function-instruction",
+    "functionName": "test"
+  }
+]
