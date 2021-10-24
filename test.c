@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
   if (expectedStack != NULL)
   {
 
-    Value *expectedStackV = malloc(expectedStack->length * sizeof expectedStack);
+    Value *expectedStackV = malloc(expectedStack->length * sizeof(*expectedStackV));
     int i = 0;
     for (struct json_array_element_s *s = expectedStack->start; s != NULL; s = s->next)
     {
