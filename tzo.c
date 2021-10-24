@@ -243,8 +243,16 @@ void i_and()
 void i_dup()
 {
     Value a = _pop();
-    _push(a);
-    _push(a);
+    if (a.type == String)
+    {
+        _push(*makeString(a.string_value));
+        _push(a);
+    }
+    else if (a.type == Number)
+    {
+        _push(*makeNumber(a.number_value));
+        _push(a);
+    }
 }
 
 void i_gt()
@@ -460,10 +468,25 @@ void initRuntime()
     }
 }
 
+void initLabelMapFromJSONObject(struct json_object_s *obj)
+{
+    for (struct json_object_element_s *s = obj->start; s != NULL; s = s->next)
+    {
+        const char *key = s->name->string;
+        if (json_value_as_number(s->value) != NULL)
+        {
+            struct json_number_s *n = json_value_as_number(s->value);
+            float f = strtof(n->number, NULL);
+            int i = (int)f;
+            hashmap_put(&labelmap, key, strlen(key), i);
+        }
+    }
+}
+
 void initProgramListFromJSONArray(struct json_array_s *array)
 {
-    program = malloc(array->length * sizeof *program);
-    stack = malloc(TZO_MAX_STACK_SIZE * sizeof *stack);
+    program = malloc(array->length * sizeof(*program));
+    stack = malloc(TZO_MAX_STACK_SIZE * sizeof(*stack));
     stackSize = 0;
 
     programSize = array->length;
@@ -503,8 +526,9 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 if (json_value_as_string(oe->value) != NULL)
                 {
                     struct json_string_s *s = json_value_as_string(oe->value);
-                    char *str = (char *)malloc(s->string_size);
-                    strcpy(str, s->string);
+                    char *str = (char *)malloc((s->string_size + 1) * sizeof(*str));
+                    strncpy(str, s->string, s->string_size);
+                    str[s->string_size] = 0;
                     program[piPointer].value = makeString(str);
                 }
                 if (json_value_as_number(oe->value) != NULL)
@@ -592,4 +616,14 @@ void run()
 void registerForeignFunction(char *name, void *func)
 {
     hashmap_put(&foreignFunctions, name, strlen(name), func);
+}
+
+void pause()
+{
+    i_pause();
+}
+
+void resume()
+{
+    running = true;
 }
