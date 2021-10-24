@@ -77,7 +77,7 @@ char *asString(Value val)
     }
 }
 
-void plus()
+void i_plus()
 {
     Value a = _pop();
     Value b = _pop();
@@ -85,7 +85,7 @@ void plus()
     _push(*c);
 }
 
-void min()
+void i_min()
 {
     Value a = _pop();
     Value b = _pop();
@@ -93,7 +93,7 @@ void min()
     _push(*c);
 }
 
-void mul()
+void i_mul()
 {
     Value a = _pop();
     Value b = _pop();
@@ -101,23 +101,23 @@ void mul()
     _push(*c);
 }
 
-void nop()
+void i_nop()
 {
 }
 
-void br_close();
+void i_br_close();
 
-void br_open()
+void i_br_open()
 {
     int i = 1;
     int pc = ppc + 1;
     while (pc < programSize)
     {
-        if (program[pc].type == invoke_function && program[pc].function_pointer == &br_open)
+        if (program[pc].type == invoke_function && program[pc].function_pointer == &i_br_open)
         {
             i += 1;
         }
-        else if (program[pc].type == invoke_function && program[pc].function_pointer == &br_close)
+        else if (program[pc].type == invoke_function && program[pc].function_pointer == &i_br_close)
         {
             i -= 1;
             if (i == 0)
@@ -131,17 +131,17 @@ void br_open()
     }
 }
 
-void br_close()
+void i_br_close()
 {
     // nop
 }
 
-void pop()
+void i_pop()
 {
     _pop();
 }
 
-void std_out()
+void i_stdout()
 {
     Value a = _pop();
     if (a.type == Number)
@@ -154,7 +154,7 @@ void std_out()
     }
 }
 
-void concat()
+void i_concat()
 {
     Value a = _pop();
     Value b = _pop();
@@ -162,7 +162,7 @@ void concat()
     _push(*c);
 }
 
-void rconcat()
+void i_rconcat()
 {
     Value a = _pop();
     Value b = _pop();
@@ -170,7 +170,7 @@ void rconcat()
     _push(*c);
 }
 
-void charCode()
+void i_charCode()
 {
     Value a = _pop();
     size_t needed = snprintf(NULL, 0, "%c", (int)a.number_value) + 1;
@@ -180,7 +180,7 @@ void charCode()
     _push(*b);
 }
 
-void randInt()
+void i_randInt()
 {
     Value a = _pop();
     int i = rand() % (int)a.number_value;
@@ -188,7 +188,7 @@ void randInt()
     _push(*b);
 }
 
-void eq()
+void i_eq()
 {
     Value a = _pop();
     Value b = _pop();
@@ -220,7 +220,7 @@ void eq()
     }
 }
 
-void and ()
+void i_and()
 {
     Value a = _pop();
     Value b = _pop();
@@ -240,14 +240,14 @@ void and ()
     _push(*makeNumber(0));
 }
 
-void dup()
+void i_dup()
 {
     Value a = _pop();
     _push(a);
     _push(a);
 }
 
-void gt()
+void i_gt()
 {
     Value a = _pop();
     Value b = _pop();
@@ -267,7 +267,7 @@ void gt()
     _push(*makeNumber(0));
 }
 
-void lt()
+void i_lt()
 {
     Value a = _pop();
     Value b = _pop();
@@ -287,7 +287,7 @@ void lt()
     _push(*makeNumber(0));
 }
 
-void jgz()
+void i_jgz()
 {
     Value a = _pop();
     assert(("jgz: value must be number", a.type == Number));
@@ -297,7 +297,7 @@ void jgz()
     }
 }
 
-void jz()
+void i_jz()
 {
     Value a = _pop();
     assert(("jz: value must be number", a.type == Number));
@@ -307,7 +307,7 @@ void jz()
     }
 }
 
-void or ()
+void i_or()
 {
     Value a = _pop();
     Value b = _pop();
@@ -327,7 +327,7 @@ void or ()
     _push(*makeNumber(0));
 }
 
-void not()
+void i_not()
 {
     Value a = _pop();
     if (a.type == Number)
@@ -356,7 +356,7 @@ void i_stacksize()
     _push(*makeNumber((float)stackSize));
 }
 
-void pause()
+void i_pause()
 {
     running = false;
 }
@@ -466,7 +466,7 @@ void initProgramListFromJSONArray(struct json_array_s *array)
 
         // set defaults:
         program[piPointer].type = invoke_function;
-        program[piPointer].function_pointer = &nop;
+        program[piPointer].function_pointer = &i_nop;
 
         struct json_object_s *obj = json_value_as_object(elem->value);
         for (struct json_object_element_s *oe = obj->start; oe != NULL; oe = oe->next)
@@ -507,33 +507,33 @@ void initProgramListFromJSONArray(struct json_array_s *array)
             }
             if (0 == strcmp(oe->name->string, "functionName"))
             {
-                bind_function("nop", &nop);
-                bind_function("plus", &plus);
-                bind_function("+", &plus);
-                bind_function("min", &min);
-                bind_function("-", &min);
-                bind_function("mul", &mul);
-                bind_function("*", &mul);
-                bind_function("pop", &pop);
-                bind_function("stdout", &std_out);
-                bind_function("concat", &concat);
-                bind_function("rconcat", &rconcat);
-                bind_function("charCode", &charCode);
-                bind_function("randInt", &randInt);
-                bind_function("eq", &eq);
-                bind_function("and", &and);
-                bind_function("dup", &dup);
-                bind_function("gt", &gt);
-                bind_function("lt", &lt);
-                bind_function("not", &not );
-                bind_function("or", & or);
+                bind_function("nop", &i_nop);
+                bind_function("plus", &i_plus);
+                bind_function("+", &i_plus);
+                bind_function("min", &i_min);
+                bind_function("-", &i_min);
+                bind_function("mul", &i_mul);
+                bind_function("*", &i_mul);
+                bind_function("pop", &i_pop);
+                bind_function("stdout", &i_stdout);
+                bind_function("concat", &i_concat);
+                bind_function("rconcat", &i_rconcat);
+                bind_function("charCode", &i_charCode);
+                bind_function("randInt", &i_randInt);
+                bind_function("eq", &i_eq);
+                bind_function("and", &i_and);
+                bind_function("dup", &i_dup);
+                bind_function("gt", &i_gt);
+                bind_function("lt", &i_lt);
+                bind_function("not", &i_not);
+                bind_function("or", &i_or);
                 bind_function("ppc", &i_ppc);
                 bind_function("stacksize", &i_stacksize);
-                bind_function("jz", &jz);
-                bind_function("jgz", &jgz);
-                bind_function("{", &br_open);
-                bind_function("}", &br_close);
-                bind_function("pause", &pause);
+                bind_function("jz", &i_jz);
+                bind_function("jgz", &i_jgz);
+                bind_function("{", &i_br_open);
+                bind_function("}", &i_br_close);
+                bind_function("pause", &i_pause);
                 bind_function("exit", &i_exit);
                 bind_function("goto", &i_goto);
                 bind_function("setContext", &i_setContext);
