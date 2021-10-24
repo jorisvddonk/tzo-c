@@ -386,25 +386,23 @@ void i_setContext()
 {
     Value a = _pop();
     Value b = _pop();
-    if (a.type == Number && b.type == Number)
+    char *key = a.string_value;
+    if (b.type == String)
     {
-        if (a.number_value < b.number_value)
-        {
-            _push(*makeNumber(1));
-            return;
-        }
-        else
-        {
-            _push(*makeNumber(0));
-            return;
-        }
+        hashmap_put(&context, key, strlen(key), makeString(b.string_value));
     }
-    _push(*makeNumber(0));
+    else if (b.type == Number)
+    {
+        hashmap_put(&context, key, strlen(key), makeNumber(b.number_value));
+    }
 }
 
 void i_getContext()
 {
-    // todo
+    Value a = _pop();
+    char *key = a.string_value;
+    Value *val = (Value *)hashmap_get(&context, a.string_value, strlen(a.string_value));
+    _push(*val);
 }
 
 struct json_value_s *loadFileGetJSON(char *filename)
@@ -428,7 +426,11 @@ void initProgramListFromJSONArray(struct json_array_s *array)
     const unsigned initial_size = 64;
     if (0 != hashmap_create(initial_size, &labelmap))
     {
-        assert(("failed to create hashmap", 0));
+        assert(("failed to create label hashmap", 0));
+    }
+    if (0 != hashmap_create(initial_size, &context))
+    {
+        assert(("failed to create context hashmap", 0));
     }
 
     program = malloc(array->length * sizeof *program);

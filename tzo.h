@@ -51,10 +51,13 @@ extern int ppc;
 extern bool running;
 extern bool exited;
 extern struct hashmap_s labelmap;
+extern struct hashmap_s context;
 
 void run();
 void step();
 struct json_value_s *loadFileGetJSON(char *filename);
 void initProgramListFromJSONArray(struct json_array_s *array);
+Value *makeString(char *str);
+Value *makeNumber(float val);
 
 #endif /* TZO_H */

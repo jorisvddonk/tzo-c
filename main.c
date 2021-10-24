@@ -10,6 +10,7 @@ int ppc;
 bool running;
 bool exited;
 struct hashmap_s labelmap;
+struct hashmap_s context;
 
 int main()
 {
