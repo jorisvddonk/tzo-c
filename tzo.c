@@ -405,6 +405,28 @@ void i_getContext()
     _push(*val);
 }
 
+void i_hasContext()
+{
+    Value a = _pop();
+    char *key = a.string_value;
+    void *const element = hashmap_get(&context, a.string_value, strlen(a.string_value));
+    if (element == NULL)
+    {
+        _push(*makeNumber(0));
+    }
+    else
+    {
+        _push(*makeNumber(1));
+    }
+}
+
+void i_delContext()
+{
+    Value a = _pop();
+    char *key = a.string_value;
+    hashmap_remove(&context, a.string_value, strlen(a.string_value));
+}
+
 struct json_value_s *loadFileGetJSON(char *filename)
 {
     FILE *f = fopen(filename, "rb");
@@ -516,6 +538,8 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("goto", &i_goto);
                 bind_function("setContext", &i_setContext);
                 bind_function("getContext", &i_getContext);
+                bind_function("hasContext", &i_hasContext);
+                bind_function("delContext", &i_delContext);
             }
         }
         piPointer += 1;
