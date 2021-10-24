@@ -443,7 +443,7 @@ struct json_value_s *loadFileGetJSON(char *filename)
     return root;
 }
 
-void initProgramListFromJSONArray(struct json_array_s *array)
+void initRuntime()
 {
     const unsigned initial_size = 64;
     if (0 != hashmap_create(initial_size, &labelmap))
@@ -454,7 +454,14 @@ void initProgramListFromJSONArray(struct json_array_s *array)
     {
         assert(("failed to create context hashmap", 0));
     }
+    if (0 != hashmap_create(initial_size, &foreignFunctions))
+    {
+        assert(("failed to create foreignFunctions hashmap", 0));
+    }
+}
 
+void initProgramListFromJSONArray(struct json_array_s *array)
+{
     program = malloc(array->length * sizeof *program);
     stack = malloc(TZO_MAX_STACK_SIZE * sizeof *stack);
     stackSize = 0;
@@ -540,6 +547,12 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                 bind_function("getContext", &i_getContext);
                 bind_function("hasContext", &i_hasContext);
                 bind_function("delContext", &i_delContext);
+
+                void *const element = hashmap_get(&foreignFunctions, json_value_as_string(oe->value)->string, strlen(json_value_as_string(oe->value)->string));
+                if (element != NULL)
+                {
+                    program[piPointer].function_pointer = element;
+                }
             }
         }
         piPointer += 1;
@@ -574,4 +587,9 @@ void run()
         step();
     }
     running = false;
+}
+
+void registerForeignFunction(char *name, void *func)
+{
+    hashmap_put(&foreignFunctions, name, strlen(name), func);
 }

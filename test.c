@@ -14,6 +14,7 @@ bool running;
 bool exited;
 struct hashmap_s labelmap;
 struct hashmap_s context;
+struct hashmap_s foreignFunctions;
 
 int main(int argc, char *argv[])
 {
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
   struct json_array_s *expectedStack = get_object_key_as_array(expected, "stack");
   struct json_object_s *expectedContext = get_object_key_as_object(expected, "context");
   printf("-> size: %d\n", inputProgram->length);
+  initRuntime();
   initProgramListFromJSONArray(inputProgram);
 
   if (initialContext != NULL)
