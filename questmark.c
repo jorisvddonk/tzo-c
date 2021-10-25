@@ -8,7 +8,7 @@ NOTE: this has a dependency on a font file ("questmark.fnt"), which is NOT inclu
 TODO: create my own font file and include it :)
 
 Usage:
-1. compile questmark document to questmark json:
+1. compile questmark document to questmark json (NOTE: you may have to run this from a different working directory, as npx may actually run questmark.exe instead of questmark from npm!):
   npx questmark --input https://raw.githubusercontent.com/jorisvddonk/asking-about-flowers/master/questmark_comm/starbase.md --output questmark.json --no-run
 2. run it via the interpreter!
   questmark.exe ./questmark.json
