@@ -49,7 +49,7 @@ int text_y = 0;
 
 void drawtext(char *str)
 {
-  printf("%s (%i, %i)", str, text_x, text_y);
+  //printf("%s (%i, %i)", str, text_x, text_y);
   outtextxy(text_x * 4, text_y * 12, str);
   int numnl = 0;
   int strl = strlen(str);
@@ -61,7 +61,7 @@ void drawtext(char *str)
     }
   }
   text_y = text_y + numnl + 1;
-  printf("--%i (%i, %i)\n", numnl, text_x, text_y);
+  //printf("--%i (%i, %i)\n", numnl, text_x, text_y);
 }
 
 char *toString(int i)
@@ -125,6 +125,7 @@ void getresponse()
 
   while (!shuttingdown())
   {
+    waitvbl();
     char key = *readchars();
     if (keystate(KEY_ESCAPE))
     {
@@ -216,6 +217,7 @@ int main(int argc, char *argv[])
 
   while (!shuttingdown())
   {
+    waitvbl();
     char key = *readchars();
     if (keystate(KEY_ESCAPE))
     {
