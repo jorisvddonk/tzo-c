@@ -4,9 +4,6 @@ A test for a Questmark interpreter, using dos-like (https://github.com/mattiasgu
 To compile:
 clang -target x86_64-pc-windows-gnu -std=c11 -I<PATH_TO_DOS-LIKE>/source -g3 questmark.c tzo.c <PATH_TO_DOS-LIKE>/source/dos.c -lgdi32 -luser32 -lwinmm -o questmark.exe
 
-NOTE: this has a dependency on a font file ("questmark.fnt"), which is NOT included! - you can copy "volter.fnt" from dos-like and rename it "questmark.fnt"
-TODO: create my own font file and include it :)
-
 Usage:
 1. compile questmark document to questmark json (NOTE: you may have to run this from a different working directory, as npx may actually run questmark.exe instead of questmark from npm!):
   npx questmark --input https://raw.githubusercontent.com/jorisvddonk/asking-about-flowers/master/questmark_comm/starbase.md --output questmark.json --no-run
@@ -162,8 +159,6 @@ void response(TzoVM *vm)
 int main(int argc, char *argv[])
 {
   setvideomode(videomode_640x480);
-  int font = installuserfont("questmark.fnt");
-  settextstyle(font, 0, 0, 0);
   setcolor(144);
 
   srand(time(NULL));
