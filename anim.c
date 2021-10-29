@@ -33,17 +33,6 @@ To run:
 #include <curl/curl.h>
 #include "physfs.h"
 
-TzoInstr *program;
-Value *stack;
-int stackSize;
-int programSize;
-int ppc;
-bool running;
-bool exited;
-struct hashmap_s labelmap;
-struct hashmap_s context;
-struct hashmap_s foreignFunctions;
-
 #define TEXT_COLOR_GAMETEXT 48
 #define TEXT_COLOR_OPTIONTEXT 54
 #define TEXT_COLOR_HEADER 97
@@ -120,9 +109,9 @@ void clearscr()
   clearscreen();
 };
 
-void drawFrame()
+void drawFrame(TzoVM *vm)
 {
-  Value frame_index = _pop(); // number
+  Value frame_index = _pop(vm); // number
   int n = frame_index.number_value;
   Texture t = textures[n];
   m_blit(0 - t.hotspot_x, 0 - t.hotspot_y, t.textureRef, t.width, t.height, 0, 0, t.width, t.height, -1, blit_screen_0);
@@ -176,13 +165,13 @@ void rgba_to_palette(char *rgba, char *r, const int count)
   }
 }
 
-void loadImage()
+void loadImage(TzoVM *vm)
 {
-  char *f = asString(_pop());
+  char *f = asString(_pop(vm));
   char filename[256];
   sprintf(filename, "%s", f);
-  Value hotspot_x = _pop(); // number
-  Value hotspot_y = _pop(); // number
+  Value hotspot_x = _pop(vm); // number
+  Value hotspot_y = _pop(vm); // number
   unsigned error;
   unsigned char *image = 0;
   unsigned width, height;
@@ -212,11 +201,11 @@ void loadImage()
   }
 }
 
-void beginDraw()
+void beginDraw(TzoVM *vm)
 {
 }
 
-void endDraw()
+void endDraw(TzoVM *vm)
 {
   maskblit(0, 0, blit_screen_0->buffer, blit_screen_0->width, blit_screen_0->height, 0, 0, blit_screen_0->width, blit_screen_0->height, -1);
 }
@@ -245,6 +234,7 @@ void initBlitScreen(Screenlike *blitscreen)
 int main(int argc, char *argv[])
 {
   PHYSFS_init(argv[0]);
+  TzoVM *vm = createTzoVM();
 
   textures = malloc(MAX_TEXTURES * sizeof(*textures));
   palette = malloc(256 * sizeof(*palette));
@@ -263,26 +253,26 @@ int main(int argc, char *argv[])
   cputs("Loading ");
   cputs(argv[1]);
   gotoxy(0, wherey() + 1);
-  struct json_value_s *root = loadFileGetJSON(argv[1]);
+  struct json_value_s *root = loadFileGetJSON(vm, argv[1]);
   cputs("File loaded!");
   gotoxy(0, wherey() + 1);
   struct json_object_s *rootObj = json_value_as_object(root);
   struct json_array_s *inputProgram = get_object_key_as_array(rootObj, "programList");
   struct json_object_s *labelMap = get_object_key_as_object(rootObj, "labelMap");
   cputs("initing: runtime...");
-  initRuntime();
+  initRuntime(vm);
   cputs(" foreign functions...");
-  registerForeignFunction("drawFrame", &drawFrame);
-  registerForeignFunction("beginDraw", &beginDraw);
-  registerForeignFunction("endDraw", &endDraw);
-  registerForeignFunction("loadImage", &loadImage);
+  registerForeignFunction(vm, "drawFrame", &drawFrame);
+  registerForeignFunction(vm, "beginDraw", &beginDraw);
+  registerForeignFunction(vm, "endDraw", &endDraw);
+  registerForeignFunction(vm, "loadImage", &loadImage);
   cputs(" labelmap...");
   if (labelMap != NULL)
   {
-    initLabelMapFromJSONObject(labelMap);
+    initLabelMapFromJSONObject(vm, labelMap);
   }
   cputs(" programlist...");
-  initProgramListFromJSONArray(inputProgram);
+  initProgramListFromJSONArray(vm, inputProgram);
   cputs(" ...done!");
   gotoxy(0, wherey() + 1);
 
@@ -340,14 +330,14 @@ int main(int argc, char *argv[])
   setvideomode(videomode_320x240);
   printf("running!");
   gotoxy(0, wherey() + 1);
-  run();
+  run(vm);
 
   // got all textures loaded now!
   // set up blit screen buffers
   blit_screen_0 = malloc(sizeof(*blit_screen_0));
   initBlitScreen(blit_screen_0);
 
-  run();
+  run(vm);
 
   for (uint8_t i = (uint8_t)0; i <= (uint8_t)254; i++)
   {
@@ -377,7 +367,7 @@ int main(int argc, char *argv[])
     if (frame > 1)
     {
       clearscr();
-      run();
+      run(vm);
       frame = 0;
     }
   }

@@ -6,10 +6,10 @@
 #define TZO_H
 
 #define TZO_MAX_STACK_SIZE 1000
-#define bind_function(X, Y)                                    \
+#define bind_function(V, X, Y)                                 \
   if (0 == strcmp(json_value_as_string(oe->value)->string, X)) \
   {                                                            \
-    program[piPointer].function_pointer = Y;                   \
+    V->program[piPointer].function_pointer = Y;                \
   }
 #define throw(X) \
   printf(X);     \
@@ -42,33 +42,38 @@ typedef struct
   void (*function_pointer)();
 } TzoInstr;
 
+typedef struct
+{
+  TzoInstr *program;
+  Value *stack;
+  int stackSize;
+  int programSize;
+  int ppc;
+  bool running;
+  bool exited;
+  struct hashmap_s labelmap;
+  struct hashmap_s context;
+  struct hashmap_s foreignFunctions;
+} TzoVM;
+
 /////////////////////////////////////////////////
 
-extern TzoInstr *program;
-extern Value *stack;
-extern int stackSize;
-extern int programSize;
-extern int ppc;
-extern bool running;
-extern bool exited;
-extern struct hashmap_s labelmap;
-extern struct hashmap_s context;
-extern struct hashmap_s foreignFunctions;
+TzoVM *createTzoVM();
+void run(TzoVM *vm);
+void step(TzoVM *vm);
+void pause(TzoVM *vm);
+void resume(TzoVM *vm);
+struct json_value_s *loadFileGetJSON(TzoVM *vm, char *filename);
+void initRuntime(TzoVM *vm);
+void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj);
+void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array);
+void registerForeignFunction(TzoVM *vm, char *name, void *func);
+void _push(TzoVM *vm, Value val);
+Value _pop(TzoVM *vm);
+Value _popS(TzoVM *vm);
 
-void run();
-void step();
-void pause();
-void resume();
-struct json_value_s *loadFileGetJSON(char *filename);
-void initRuntime();
-void initLabelMapFromJSONObject(struct json_object_s *obj);
-void initProgramListFromJSONArray(struct json_array_s *array);
 Value *makeString(char *str);
 Value *makeNumber(float val);
-void registerForeignFunction(char *name, void *func);
-void _push(Value val);
-Value _pop();
-Value _popS();
 float asInt_f(Value val);
 char *asString(Value val);
 

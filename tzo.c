@@ -23,22 +23,22 @@ Value *makeNumber(float val)
     return value;
 }
 
-void _push(Value val)
+void _push(TzoVM *vm, Value val)
 {
-    stack[stackSize] = val;
-    stackSize += 1;
+    vm->stack[vm->stackSize] = val;
+    vm->stackSize += 1;
 }
 
-Value _pop()
+Value _pop(TzoVM *vm)
 {
-    Value val = stack[stackSize - 1];
-    stackSize -= 1;
+    Value val = vm->stack[vm->stackSize - 1];
+    vm->stackSize -= 1;
     return val;
 }
 
-Value _popS()
+Value _popS(TzoVM *vm)
 {
-    Value val = _pop();
+    Value val = _pop(vm);
     assert(val.type == String);
     return val;
 }
@@ -77,53 +77,53 @@ char *asString(Value val)
     }
 }
 
-void i_plus()
+void i_plus(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     Value *c = makeNumber(a.number_value + b.number_value);
-    _push(*c);
+    _push(vm, *c);
 }
 
-void i_min()
+void i_min(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     Value *c = makeNumber(a.number_value - b.number_value);
-    _push(*c);
+    _push(vm, *c);
 }
 
-void i_mul()
+void i_mul(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     Value *c = makeNumber(a.number_value * b.number_value);
-    _push(*c);
+    _push(vm, *c);
 }
 
-void i_nop()
+void i_nop(TzoVM *vm)
 {
 }
 
-void i_br_close();
+void i_br_close(TzoVM *vm);
 
-void i_br_open()
+void i_br_open(TzoVM *vm)
 {
     int i = 1;
-    int pc = ppc + 1;
-    while (pc < programSize)
+    int pc = vm->ppc + 1;
+    while (pc < vm->programSize)
     {
-        if (program[pc].type == invoke_function && program[pc].function_pointer == &i_br_open)
+        if (vm->program[pc].type == invoke_function && vm->program[pc].function_pointer == &i_br_open)
         {
             i += 1;
         }
-        else if (program[pc].type == invoke_function && program[pc].function_pointer == &i_br_close)
+        else if (vm->program[pc].type == invoke_function && vm->program[pc].function_pointer == &i_br_close)
         {
             i -= 1;
             if (i == 0)
             {
                 // found it!
-                ppc = pc;
+                vm->ppc = pc;
                 return;
             }
         }
@@ -131,19 +131,19 @@ void i_br_open()
     }
 }
 
-void i_br_close()
+void i_br_close(TzoVM *vm)
 {
     // nop
 }
 
-void i_pop()
+void i_pop(TzoVM *vm)
 {
-    _pop();
+    _pop(vm);
 }
 
-void i_stdout()
+void i_stdout(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     if (a.type == Number)
     {
         printf("%f", a.number_value);
@@ -154,288 +154,288 @@ void i_stdout()
     }
 }
 
-void i_concat()
+void i_concat(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     Value *c = makeString(strcat(asString(a), asString(b)));
-    _push(*c);
+    _push(vm, *c);
 }
 
-void i_rconcat()
+void i_rconcat(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     Value *c = makeString(strcat(asString(b), asString(a)));
-    _push(*c);
+    _push(vm, *c);
 }
 
-void i_charCode()
+void i_charCode(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     size_t needed = snprintf(NULL, 0, "%c", (int)a.number_value) + 1;
     char *buffer = malloc(needed);
     sprintf(buffer, "%c", (int)a.number_value);
     Value *b = makeString(buffer);
-    _push(*b);
+    _push(vm, *b);
 }
 
-void i_randInt()
+void i_randInt(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     int i = rand() % (int)a.number_value;
     Value *b = makeNumber((float)i);
-    _push(*b);
+    _push(vm, *b);
 }
 
-void i_eq()
+void i_eq(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     if (a.type != b.type)
     {
-        _push(*makeNumber(0));
+        _push(vm, *makeNumber(0));
     }
     else if (a.type == String)
     {
         if (strcmp(a.string_value, b.string_value) == 0)
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
         }
         else
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
         }
     }
     else if (a.type == Number)
     {
         if (a.number_value == b.number_value)
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
         }
         else
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
         }
     }
 }
 
-void i_and()
+void i_and(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     if (a.type == Number && b.type == Number)
     {
         if (a.number_value == 0 || b.number_value == 0)
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
             return;
         }
         else
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
             return;
         }
     }
-    _push(*makeNumber(0));
+    _push(vm, *makeNumber(0));
 }
 
-void i_dup()
+void i_dup(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     if (a.type == String)
     {
-        _push(*makeString(a.string_value));
-        _push(a);
+        _push(vm, *makeString(a.string_value));
+        _push(vm, a);
     }
     else if (a.type == Number)
     {
-        _push(*makeNumber(a.number_value));
-        _push(a);
+        _push(vm, *makeNumber(a.number_value));
+        _push(vm, a);
     }
 }
 
-void i_gt()
+void i_gt(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     if (a.type == Number && b.type == Number)
     {
         if (a.number_value > b.number_value)
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
             return;
         }
         else
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
             return;
         }
     }
-    _push(*makeNumber(0));
+    _push(vm, *makeNumber(0));
 }
 
-void i_lt()
+void i_lt(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     if (a.type == Number && b.type == Number)
     {
         if (a.number_value < b.number_value)
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
             return;
         }
         else
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
             return;
         }
     }
-    _push(*makeNumber(0));
+    _push(vm, *makeNumber(0));
 }
 
-void i_jgz()
+void i_jgz(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     assert(("jgz: value must be number", a.type == Number));
     if (asInt_f(a) > 0)
     {
-        ppc += 1;
+        vm->ppc += 1;
     }
 }
 
-void i_jz()
+void i_jz(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     assert(("jz: value must be number", a.type == Number));
     if (asInt_f(a) == 0)
     {
-        ppc += 1;
+        vm->ppc += 1;
     }
 }
 
-void i_or()
+void i_or(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     if (a.type == Number && b.type == Number)
     {
         if (a.number_value == 0 && b.number_value == 0)
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
             return;
         }
         else
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
             return;
         }
     }
-    _push(*makeNumber(0));
+    _push(vm, *makeNumber(0));
 }
 
-void i_not()
+void i_not(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     if (a.type == Number)
     {
         if (a.number_value == 0)
         {
-            _push(*makeNumber(1));
+            _push(vm, *makeNumber(1));
             return;
         }
         else
         {
-            _push(*makeNumber(0));
+            _push(vm, *makeNumber(0));
             return;
         }
     }
-    _push(*makeNumber(0));
+    _push(vm, *makeNumber(0));
 }
 
-void i_ppc()
+void i_ppc(TzoVM *vm)
 {
-    _push(*makeNumber((float)ppc));
+    _push(vm, *makeNumber((float)vm->ppc));
 }
 
-void i_stacksize()
+void i_stacksize(TzoVM *vm)
 {
-    _push(*makeNumber((float)stackSize));
+    _push(vm, *makeNumber((float)vm->stackSize));
 }
 
-void i_pause()
+void i_pause(TzoVM *vm)
 {
-    running = false;
+    vm->running = false;
 }
 
-void i_exit()
+void i_exit(TzoVM *vm)
 {
-    running = false;
-    exited = true;
+    vm->running = false;
+    vm->exited = true;
 }
 
-void i_goto()
+void i_goto(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     if (a.type == Number)
     {
         int i = (int)(asInt_f(a)) - 1;
-        ppc = i;
+        vm->ppc = i;
     }
     else if (a.type == String)
     {
-        int i = hashmap_get(&labelmap, a.string_value, strlen(a.string_value));
-        ppc = i - 1;
+        int i = hashmap_get(&vm->labelmap, a.string_value, strlen(a.string_value));
+        vm->ppc = i - 1;
     }
 }
 
-void i_setContext()
+void i_setContext(TzoVM *vm)
 {
-    Value a = _pop();
-    Value b = _pop();
+    Value a = _pop(vm);
+    Value b = _pop(vm);
     char *key = a.string_value;
     if (b.type == String)
     {
-        hashmap_put(&context, key, strlen(key), makeString(b.string_value));
+        hashmap_put(&vm->context, key, strlen(key), makeString(b.string_value));
     }
     else if (b.type == Number)
     {
-        hashmap_put(&context, key, strlen(key), makeNumber(b.number_value));
+        hashmap_put(&vm->context, key, strlen(key), makeNumber(b.number_value));
     }
 }
 
-void i_getContext()
+void i_getContext(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     char *key = a.string_value;
-    Value *val = (Value *)hashmap_get(&context, a.string_value, strlen(a.string_value));
-    _push(*val);
+    Value *val = (Value *)hashmap_get(&vm->context, a.string_value, strlen(a.string_value));
+    _push(vm, *val);
 }
 
-void i_hasContext()
+void i_hasContext(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     char *key = a.string_value;
-    void *const element = hashmap_get(&context, a.string_value, strlen(a.string_value));
+    void *const element = hashmap_get(&vm->context, a.string_value, strlen(a.string_value));
     if (element == NULL)
     {
-        _push(*makeNumber(0));
+        _push(vm, *makeNumber(0));
     }
     else
     {
-        _push(*makeNumber(1));
+        _push(vm, *makeNumber(1));
     }
 }
 
-void i_delContext()
+void i_delContext(TzoVM *vm)
 {
-    Value a = _pop();
+    Value a = _pop(vm);
     char *key = a.string_value;
-    hashmap_remove(&context, a.string_value, strlen(a.string_value));
+    hashmap_remove(&vm->context, a.string_value, strlen(a.string_value));
 }
 
-struct json_value_s *loadFileGetJSON(char *filename)
+struct json_value_s *loadFileGetJSON(TzoVM *vm, char *filename)
 {
     FILE *f = fopen(filename, "rb");
     fseek(f, 0, SEEK_END);
@@ -451,24 +451,24 @@ struct json_value_s *loadFileGetJSON(char *filename)
     return root;
 }
 
-void initRuntime()
+void initRuntime(TzoVM *vm)
 {
     const unsigned initial_size = 64;
-    if (0 != hashmap_create(initial_size, &labelmap))
+    if (0 != hashmap_create(initial_size, &vm->labelmap))
     {
         assert(("failed to create label hashmap", 0));
     }
-    if (0 != hashmap_create(initial_size, &context))
+    if (0 != hashmap_create(initial_size, &vm->context))
     {
         assert(("failed to create context hashmap", 0));
     }
-    if (0 != hashmap_create(initial_size, &foreignFunctions))
+    if (0 != hashmap_create(initial_size, &vm->foreignFunctions))
     {
         assert(("failed to create foreignFunctions hashmap", 0));
     }
 }
 
-void initLabelMapFromJSONObject(struct json_object_s *obj)
+void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj)
 {
     for (struct json_object_element_s *s = obj->start; s != NULL; s = s->next)
     {
@@ -478,25 +478,22 @@ void initLabelMapFromJSONObject(struct json_object_s *obj)
             struct json_number_s *n = json_value_as_number(s->value);
             float f = strtof(n->number, NULL);
             int i = (int)f;
-            hashmap_put(&labelmap, key, strlen(key), i);
+            hashmap_put(&vm->labelmap, key, strlen(key), i);
         }
     }
 }
 
-void initProgramListFromJSONArray(struct json_array_s *array)
+void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array)
 {
-    program = malloc(array->length * sizeof(*program));
-    stack = malloc(TZO_MAX_STACK_SIZE * sizeof(*stack));
-    stackSize = 0;
-
-    programSize = array->length;
+    vm->program = malloc(array->length * sizeof(*vm->program));
+    vm->programSize = array->length;
     int piPointer = 0;
     for (struct json_array_element_s *elem = array->start; elem != NULL; elem = elem->next)
     {
 
         // set defaults:
-        program[piPointer].type = invoke_function;
-        program[piPointer].function_pointer = &i_nop;
+        vm->program[piPointer].type = invoke_function;
+        vm->program[piPointer].function_pointer = &i_nop;
 
         struct json_object_s *obj = json_value_as_object(elem->value);
         for (struct json_object_element_s *oe = obj->start; oe != NULL; oe = oe->next)
@@ -505,23 +502,23 @@ void initProgramListFromJSONArray(struct json_array_s *array)
             {
                 if (0 == strcmp(json_value_as_string(oe->value)->string, "push-number-instruction"))
                 {
-                    program[piPointer].type = push_number;
+                    vm->program[piPointer].type = push_number;
                 }
                 if (0 == strcmp(json_value_as_string(oe->value)->string, "push-string-instruction"))
                 {
-                    program[piPointer].type = push_string;
+                    vm->program[piPointer].type = push_string;
                 }
                 if (0 == strcmp(json_value_as_string(oe->value)->string, "invoke-function-instruction"))
                 {
-                    program[piPointer].type = invoke_function;
+                    vm->program[piPointer].type = invoke_function;
                 }
             }
-            if (0 == strcmp(oe->name->string, "label"))
+            else if (0 == strcmp(oe->name->string, "label"))
             {
                 char *key = json_value_as_string(oe->value)->string;
-                hashmap_put(&labelmap, key, strlen(key), piPointer);
+                hashmap_put(&vm->labelmap, key, strlen(key), piPointer);
             }
-            if (0 == strcmp(oe->name->string, "value"))
+            else if (0 == strcmp(oe->name->string, "value"))
             {
                 if (json_value_as_string(oe->value) != NULL)
                 {
@@ -529,53 +526,54 @@ void initProgramListFromJSONArray(struct json_array_s *array)
                     char *str = (char *)malloc((s->string_size + 1) * sizeof(*str));
                     strncpy(str, s->string, s->string_size);
                     str[s->string_size] = 0;
-                    program[piPointer].value = makeString(str);
+                    vm->program[piPointer].value = makeString(str);
                 }
                 if (json_value_as_number(oe->value) != NULL)
                 {
-                    program[piPointer].value = makeNumber(atof(json_value_as_number(oe->value)->number));
+                    Value *v = makeNumber(atof(json_value_as_number(oe->value)->number));
+                    vm->program[piPointer].value = v;
                 }
             }
-            if (0 == strcmp(oe->name->string, "functionName"))
+            else if (0 == strcmp(oe->name->string, "functionName"))
             {
-                bind_function("nop", &i_nop);
-                bind_function("plus", &i_plus);
-                bind_function("+", &i_plus);
-                bind_function("min", &i_min);
-                bind_function("-", &i_min);
-                bind_function("mul", &i_mul);
-                bind_function("*", &i_mul);
-                bind_function("pop", &i_pop);
-                bind_function("stdout", &i_stdout);
-                bind_function("concat", &i_concat);
-                bind_function("rconcat", &i_rconcat);
-                bind_function("charCode", &i_charCode);
-                bind_function("randInt", &i_randInt);
-                bind_function("eq", &i_eq);
-                bind_function("and", &i_and);
-                bind_function("dup", &i_dup);
-                bind_function("gt", &i_gt);
-                bind_function("lt", &i_lt);
-                bind_function("not", &i_not);
-                bind_function("or", &i_or);
-                bind_function("ppc", &i_ppc);
-                bind_function("stacksize", &i_stacksize);
-                bind_function("jz", &i_jz);
-                bind_function("jgz", &i_jgz);
-                bind_function("{", &i_br_open);
-                bind_function("}", &i_br_close);
-                bind_function("pause", &i_pause);
-                bind_function("exit", &i_exit);
-                bind_function("goto", &i_goto);
-                bind_function("setContext", &i_setContext);
-                bind_function("getContext", &i_getContext);
-                bind_function("hasContext", &i_hasContext);
-                bind_function("delContext", &i_delContext);
+                bind_function(vm, "nop", &i_nop);
+                bind_function(vm, "plus", &i_plus);
+                bind_function(vm, "+", &i_plus);
+                bind_function(vm, "min", &i_min);
+                bind_function(vm, "-", &i_min);
+                bind_function(vm, "mul", &i_mul);
+                bind_function(vm, "*", &i_mul);
+                bind_function(vm, "pop", &i_pop);
+                bind_function(vm, "stdout", &i_stdout);
+                bind_function(vm, "concat", &i_concat);
+                bind_function(vm, "rconcat", &i_rconcat);
+                bind_function(vm, "charCode", &i_charCode);
+                bind_function(vm, "randInt", &i_randInt);
+                bind_function(vm, "eq", &i_eq);
+                bind_function(vm, "and", &i_and);
+                bind_function(vm, "dup", &i_dup);
+                bind_function(vm, "gt", &i_gt);
+                bind_function(vm, "lt", &i_lt);
+                bind_function(vm, "not", &i_not);
+                bind_function(vm, "or", &i_or);
+                bind_function(vm, "ppc", &i_ppc);
+                bind_function(vm, "stacksize", &i_stacksize);
+                bind_function(vm, "jz", &i_jz);
+                bind_function(vm, "jgz", &i_jgz);
+                bind_function(vm, "{", &i_br_open);
+                bind_function(vm, "}", &i_br_close);
+                bind_function(vm, "pause", &i_pause);
+                bind_function(vm, "exit", &i_exit);
+                bind_function(vm, "goto", &i_goto);
+                bind_function(vm, "setContext", &i_setContext);
+                bind_function(vm, "getContext", &i_getContext);
+                bind_function(vm, "hasContext", &i_hasContext);
+                bind_function(vm, "delContext", &i_delContext);
 
-                void *const element = hashmap_get(&foreignFunctions, json_value_as_string(oe->value)->string, strlen(json_value_as_string(oe->value)->string));
+                void *const element = hashmap_get(&vm->foreignFunctions, json_value_as_string(oe->value)->string, strlen(json_value_as_string(oe->value)->string));
                 if (element != NULL)
                 {
-                    program[piPointer].function_pointer = element;
+                    vm->program[piPointer].function_pointer = element;
                 }
             }
         }
@@ -583,47 +581,60 @@ void initProgramListFromJSONArray(struct json_array_s *array)
     }
 }
 
-void step()
+void step(TzoVM *vm)
 {
-    if (program[ppc].type == push_string)
+    if (vm->program[vm->ppc].type == push_string)
     {
         //printf("->%s\n", program[ppc].value->string_value);
-        _push(*makeString(program[ppc].value->string_value));
+        _push(vm, *makeString(vm->program[vm->ppc].value->string_value));
     }
-    if (program[ppc].type == push_number)
+    if (vm->program[vm->ppc].type == push_number)
     {
         //printf("->%f\n", program[ppc].value->number_value);
-        _push(*makeNumber(program[ppc].value->number_value));
+        _push(vm, *makeNumber(vm->program[vm->ppc].value->number_value));
     }
-    if (program[ppc].type == invoke_function)
+    if (vm->program[vm->ppc].type == invoke_function)
     {
         //printf("->FUNC\n");
-        program[ppc].function_pointer();
+        vm->program[vm->ppc].function_pointer(vm);
     }
-    ppc = ppc + 1;
+    vm->ppc = vm->ppc + 1;
 }
 
-void run()
+void run(TzoVM *vm)
 {
-    running = true;
-    while (running && ppc < programSize)
+    vm->running = true;
+    while (vm->running && vm->ppc < vm->programSize)
     {
-        step();
+        step(vm);
     }
-    running = false;
+    vm->running = false;
 }
 
-void registerForeignFunction(char *name, void *func)
+void registerForeignFunction(TzoVM *vm, char *name, void *func)
 {
-    hashmap_put(&foreignFunctions, name, strlen(name), func);
+    hashmap_put(&vm->foreignFunctions, name, strlen(name), func);
 }
 
-void pause()
+void pause(TzoVM *vm)
 {
-    i_pause();
+    i_pause(vm);
 }
 
-void resume()
+void resume(TzoVM *vm)
 {
-    running = true;
+    vm->running = true;
+}
+
+TzoVM *createTzoVM()
+{
+    TzoVM *vm = malloc(sizeof(vm));
+    vm->ppc = 0;
+    vm->exited = false;
+    vm->running = false;
+    vm->stack = malloc(TZO_MAX_STACK_SIZE * sizeof(*vm->stack));
+    vm->stackSize = 0;
+    vm->program = malloc(128 * sizeof(*vm->program));
+    vm->programSize = 0;
+    return vm;
 }

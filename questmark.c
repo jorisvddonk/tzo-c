@@ -2,7 +2,7 @@
 A test for a Questmark interpreter, using dos-like (https://github.com/mattiasgustavsson/dos-like) to render.
 
 To compile:
-clang -target x86_64-pc-windows-gnu -I<PATH_TO_DOS-LIKE>/source -g3 questmark.c tzo.c <PATH_TO_DOS-LIKE>/source/dos.c -lgdi32 -luser32 -lwinmm -o questmark.exe
+clang -target x86_64-pc-windows-gnu -std=c11 -I<PATH_TO_DOS-LIKE>/source -g3 questmark.c tzo.c <PATH_TO_DOS-LIKE>/source/dos.c -lgdi32 -luser32 -lwinmm -o questmark.exe
 
 NOTE: this has a dependency on a font file ("questmark.fnt"), which is NOT included! - you can copy "volter.fnt" from dos-like and rename it "questmark.fnt"
 TODO: create my own font file and include it :)
@@ -22,21 +22,11 @@ Usage:
 #include "dos.h" // https://github.com/mattiasgustavsson/dos-like
 #include <assert.h>
 
-TzoInstr *program;
-Value *stack;
-int stackSize;
-int programSize;
-int ppc;
-bool running;
-bool exited;
-struct hashmap_s labelmap;
-struct hashmap_s context;
-struct hashmap_s foreignFunctions;
-struct hashmap_s responseMap;
-
 #define TEXT_COLOR_GAMETEXT 48
 #define TEXT_COLOR_OPTIONTEXT 54
 #define TEXT_COLOR_HEADER 97
+
+struct hashmap_s responseMap;
 
 typedef struct
 {
@@ -95,17 +85,17 @@ int clearResponse(void *const context, struct hashmap_element_s *const e)
   return -1;
 }
 
-void emit()
+void emit(TzoVM *vm)
 {
   setcolor(TEXT_COLOR_GAMETEXT);
-  char *str = asString(_pop());
+  char *str = asString(_pop(vm));
   printf("%s ", str);
   drawtext(str);
 }
 
-void getresponse()
+void getresponse(TzoVM *vm)
 {
-  pause();
+  pause(vm);
   setcolor(TEXT_COLOR_OPTIONTEXT);
   int size = hashmap_num_entries(&responseMap);
   text_x = 0;
@@ -139,13 +129,13 @@ void getresponse()
       {
         clearscr();
         Value num = *makeNumber(ans->pc);
-        _push(num);
+        _push(vm, num);
         int *value = 0;
         if (0 != hashmap_iterate_pairs(&responseMap, clearResponse, &value))
         {
           printf("failed to deallocate hashmap entries!!\n");
         }
-        resume();
+        resume(vm);
         break;
       }
     }
@@ -154,10 +144,10 @@ void getresponse()
   char *key = toString(0);
 }
 
-void response()
+void response(TzoVM *vm)
 {
-  Value a = _pop(); // number
-  Value b = _pop(); // string
+  Value a = _pop(vm); // number
+  Value b = _pop(vm); // string
   int pc = a.number_value;
   char *str = asString(b);
   Answer *ans = malloc(sizeof *ans);
@@ -178,25 +168,26 @@ int main(int argc, char *argv[])
 
   srand(time(NULL));
   printf("Loading %s ...\n", argv[1]);
-  struct json_value_s *root = loadFileGetJSON(argv[1]);
-  printf("File loaded (%d)\n", root->type);
-  struct json_object_s *rootObj = json_value_as_object(root);
-  struct json_array_s *inputProgram = get_object_key_as_array(rootObj, "programList");
-  struct json_object_s *labelMap = get_object_key_as_object(rootObj, "labelMap");
-  initRuntime();
+  TzoVM *vm = createTzoVM();
   if (0 != hashmap_create(32, &responseMap))
   {
     assert(("failed to create responseMap hashmap", 0));
   }
-  registerForeignFunction("emit", &emit);
-  registerForeignFunction("getResponse", &getresponse);
-  registerForeignFunction("response", &response);
+  struct json_value_s *root = loadFileGetJSON(vm, argv[1]);
+  printf("File loaded (%d)\n", root->type);
+  struct json_object_s *rootObj = json_value_as_object(root);
+  struct json_array_s *inputProgram = get_object_key_as_array(rootObj, "programList");
+  struct json_object_s *labelMap = get_object_key_as_object(rootObj, "labelMap");
+  initRuntime(vm);
+  registerForeignFunction(vm, "emit", &emit);
+  registerForeignFunction(vm, "getResponse", &getresponse);
+  registerForeignFunction(vm, "response", &response);
   if (labelMap != NULL)
   {
-    initLabelMapFromJSONObject(labelMap);
+    initLabelMapFromJSONObject(vm, labelMap);
   }
   printf("- %i", inputProgram->length);
-  initProgramListFromJSONArray(inputProgram);
+  initProgramListFromJSONArray(vm, inputProgram);
 
   clearscr();
   cursoff();
@@ -210,7 +201,7 @@ int main(int argc, char *argv[])
   */
 
   printf("running!\n");
-  run();
+  run(vm);
   printf("done!\n");
   setcolor(TEXT_COLOR_HEADER);
   drawtext("-< PRESS ESCAPE TO EXIT >-");
