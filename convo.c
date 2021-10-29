@@ -112,7 +112,7 @@ void m_blit(int x, int y, unsigned char *source, int width, int height, int srcx
 
 void drawtext(char *str)
 {
-  //printf("%s (%i, %i)", str, text_x, text_y);
+  //cputs("%s (%i, %i)", str, text_x, text_y);
   outtextxy(text_x * 4, text_y * 12, str);
   int numnl = 0;
   int strl = strlen(str);
@@ -124,7 +124,7 @@ void drawtext(char *str)
     }
   }
   text_y = text_y + numnl + 1;
-  //printf("--%i (%i, %i)\n", numnl, text_x, text_y);
+  //cputs("--%i (%i, %i)\n", numnl, text_x, text_y);
 }
 
 void clearscr()
@@ -137,14 +137,14 @@ void clearscr()
 
 char *toString(int i)
 {
-  size_t needed = snprintf(NULL, 0, "%i", i) + 1;
+  size_t needed = sprintf(NULL, 0, "%i", i) + 1;
   char *key = malloc(needed);
   sprintf(key, "%i", i);
   return key;
 }
 char *toStringC(int i)
 {
-  size_t needed = snprintf(NULL, 0, "%c", i) + 1;
+  size_t needed = sprintf(NULL, 0, "%c", i) + 1;
   char *key = malloc(needed);
   sprintf(key, "%c", i);
   return key;
@@ -192,7 +192,7 @@ void rgba_to_palette(char *rgba, char *r, const int count)
       }
       else
       {
-        printf("No more slots!\n");
+        cputs("No more slots!\n");
       }
     }
     if (maxi < f)
@@ -268,7 +268,6 @@ void initBlitScreen(Screenlike *blitscreen)
       blitscreen->height = t.height - t.hotspot_y;
     }
   }
-  printf("%i, %i\n", blitscreen->width, blitscreen->height);
   blitscreen->buffer = malloc(blitscreen->height * blitscreen->width * sizeof(uint8_t));
 }
 
@@ -355,57 +354,57 @@ int main(int argc, char *argv[])
   cursoff();
 
   srand(time(NULL));
-  printf("Loading ");
-  printf(argv[1]);
+  cputs("Loading ");
+  cputs(argv[1]);
   gotoxy(0, wherey() + 1);
   struct json_value_s *root = loadFileGetJSON(vm, argv[1]);
-  printf("File loaded!");
+  cputs("File loaded!");
   gotoxy(0, wherey() + 1);
   struct json_object_s *rootObj = json_value_as_object(root);
   struct json_array_s *inputProgram = get_object_key_as_array(rootObj, "programList");
   struct json_object_s *labelMap = get_object_key_as_object(rootObj, "labelMap");
-  printf("initing: runtime...");
+  cputs("initing: runtime...");
   initRuntime(vm);
-  printf(" foreign functions...");
+  cputs(" foreign functions...");
   registerForeignFunction(vm, "drawFrame", &drawFrame);
   registerForeignFunction(vm, "beginDraw", &beginDraw);
   registerForeignFunction(vm, "endDraw", &endDraw);
   registerForeignFunction(vm, "loadImage", &loadImage);
-  printf(" labelmap...");
+  cputs(" labelmap...");
   if (labelMap != NULL)
   {
     initLabelMapFromJSONObject(vm, labelMap);
   }
-  printf(" programlist...");
+  cputs(" programlist...");
   initProgramListFromJSONArray(vm, inputProgram);
-  printf(" ...done!");
+  cputs(" ...done!");
   gotoxy(0, wherey() + 1);
 
   ///
 
-  printf("Loading ");
-  printf(argv[2]);
+  cputs("Loading ");
+  cputs(argv[2]);
   gotoxy(0, wherey() + 1);
   struct json_value_s *root_q = loadFileGetJSON(questvm, argv[2]);
-  printf("File loaded!");
+  cputs("File loaded!");
   gotoxy(0, wherey() + 1);
   struct json_object_s_q *rootObj_q = json_value_as_object(root_q);
   struct json_array_s_q *inputProgram_q = get_object_key_as_array(rootObj_q, "programList");
   struct json_object_s_q *labelMap_q = get_object_key_as_object(rootObj_q, "labelMap");
-  printf("initing: runtime...");
+  cputs("initing: runtime...");
   initRuntime(questvm);
-  printf(" foreign functions...");
+  cputs(" foreign functions...");
   registerForeignFunction(questvm, "emit", &emit);
   registerForeignFunction(questvm, "getResponse", &getresponse);
   registerForeignFunction(questvm, "response", &response);
-  printf(" labelmap...");
+  cputs(" labelmap...");
   if (labelMap_q != NULL)
   {
     initLabelMapFromJSONObject(questvm, labelMap_q);
   }
-  printf(" programlist...");
+  cputs(" programlist...");
   initProgramListFromJSONArray(questvm, inputProgram_q);
-  printf(" ...done!");
+  cputs(" ...done!");
   gotoxy(0, wherey() + 1);
 
   /*
@@ -418,7 +417,7 @@ int main(int argc, char *argv[])
 
   const char *fname = "uqm-0.8.0-content.uqm";
   FILE *checkFile;
-  if (false && (checkFile = fopen(fname, "r")) == NULL)
+  if ((checkFile = fopen(fname, "r")) == NULL)
   {
     CURL *curl = curl_easy_init();
     if (curl)
@@ -426,7 +425,7 @@ int main(int argc, char *argv[])
       CURLcode res;
       curl_easy_setopt(curl, CURLOPT_URL, "http://ftp.fau.de/gentoo/distfiles/a5/uqm-0.8.0-content.uqm");
       curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-      printf("downloading UQM content file...");
+      cputs("downloading UQM content file...");
       gotoxy(0, wherey() + 1);
 
       FILE *contentfile;
@@ -441,26 +440,26 @@ int main(int argc, char *argv[])
     }
     else
     {
-      printf("CURL not loaded!? ERROR!");
+      cputs("CURL not loaded!? ERROR!");
       gotoxy(0, wherey() + 1);
     }
   }
   else
   {
-    printf("UQM content file found!");
+    cputs("UQM content file found!");
     gotoxy(0, wherey() + 1);
     fclose(checkFile);
   }
 
-  printf("Mounting .uqm file...");
+  cputs("Mounting .uqm file...");
   gotoxy(0, wherey() + 1);
   PHYSFS_mount("uqm-0.8.0-content.uqm", NULL, 0);
 
-  printf("Mounted! Starting!");
+  cputs("Mounted! Starting!");
   gotoxy(0, wherey() + 1);
   clearscr();
 
-  printf("running!");
+  cputs("running!");
   gotoxy(0, wherey() + 1);
   run(vm);
 
@@ -483,7 +482,7 @@ int main(int argc, char *argv[])
     getpal(i, &r, &g, &b);
   }
 
-  printf("done!\n");
+  cputs("done!\n");
   setcolor(TEXT_COLOR_HEADER);
 
   run(questvm);
@@ -507,7 +506,7 @@ int main(int argc, char *argv[])
         int *value = 0;
         if (0 != hashmap_iterate_pairs(&responseMap, clearResponse, &value))
         {
-          printf("failed to deallocate hashmap entries!!\n");
+          cputs("failed to deallocate hashmap entries!!\n");
         }
         resume(questvm);
         lastStroke = 10;
