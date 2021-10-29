@@ -2,9 +2,13 @@
 
 This is an implementation of the [Tzo Virtual Stack Machine](https://github.com/jorisvddonk/tzo) in C.
 
-Additionally, there's a [Questmark interpreter](https://github.com/jorisvddonk/questmark), too, with fancy rendering via [dos-like](https://github.com/mattiasgustavsson/dos-like)!
+Additionally, there's a [Questmark interpreter](https://github.com/jorisvddonk/questmark) (`questmark.c`), too, with fancy rendering via [dos-like](https://github.com/mattiasgustavsson/dos-like)!
 
 ![](./readme_assets/screenshot.jpg)
+
+There's also a TextureVM implementation as well (in `anim.c`):
+
+![](./readme_assets/anim.gif)
 
 ...I should probably spend some time on refactoring these out into separate projects... 😂
 
