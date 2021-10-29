@@ -628,7 +628,7 @@ void resume(TzoVM *vm)
 
 TzoVM *createTzoVM()
 {
-    TzoVM *vm = malloc(sizeof(vm));
+    TzoVM *vm = malloc(sizeof(*vm));
     vm->ppc = 0;
     vm->exited = false;
     vm->running = false;
