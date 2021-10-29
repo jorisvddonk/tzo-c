@@ -1,7 +1,26 @@
 /*
 UQM comm screen animation example
-To compile:
-clang -target x86_64-pc-windows-gnu -I<PATH_TO_DOS-LIKE>/source -I<PATH_TO_LODEPNG> -g3 anim.c tzo.c <PATH_TO_DOS-LIKE>/source/dos.c <PATH_TO_LODEPNG>/lodepng.c -lgdi32 -luser32 -lwinmm -o anim.exe
+To compile (on Windows, via clang):
+clang -target x86_64-pc-windows-gnu \
+  -I<PATH_TO_DOS-LIKE>/source \
+  -I<PATH_TO_LODEPNG> \
+  -I<PATH_TO_LIBCURL>/include \
+  -I<PATH_TO_PHYSFS>/src \
+  -g3 \
+  anim.c \
+  tzo.c \
+  <PATH_TO_DOS-LIKE>/source/dos.c \
+  <PATH_TO_LODEPNG>/lodepng.c \
+  <PATH_TO_LIBCURL>/bin/libcurl-x64.dll \
+  <PATH_TO_PHYSFS>/build/libphysfs.dll \
+  -lgdi32 -luser32 -lwinmm \
+  -o anim.exe
+  
+To run:
+1. make sure you have required .dll files available here
+2. ./anim.exe ./yehat.json
+
+(the tool will automatically download required .uqm content file if not available)
 */
 
 #include <stdlib.h>
@@ -11,6 +30,8 @@ clang -target x86_64-pc-windows-gnu -I<PATH_TO_DOS-LIKE>/source -I<PATH_TO_LODEP
 #include "dos.h" // https://github.com/mattiasgustavsson/dos-like
 #include <assert.h>
 #include "lodepng.h"
+#include <curl/curl.h>
+#include "physfs.h"
 
 TzoInstr *program;
 Value *stack;
@@ -28,6 +49,11 @@ struct hashmap_s foreignFunctions;
 #define TEXT_COLOR_HEADER 97
 #define MAX_TEXTURES 128
 
+size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
+{
+  size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
+  return written;
+}
 typedef struct
 {
   int pc;
@@ -154,14 +180,24 @@ void loadImage()
 {
   char *f = asString(_pop());
   char filename[256];
-  sprintf(filename, "./res/%s", f);
+  sprintf(filename, "%s", f);
   Value hotspot_x = _pop(); // number
   Value hotspot_y = _pop(); // number
   unsigned error;
   unsigned char *image = 0;
   unsigned width, height;
 
-  error = lodepng_decode32_file(&image, &width, &height, filename);
+  if (!PHYSFS_exists(filename))
+  {
+    printf("error: file %s does not exist. aborting!\n", filename);
+    exit(1);
+  }
+
+  PHYSFS_file *myfile = PHYSFS_openRead(filename);
+  PHYSFS_sint64 file_size = PHYSFS_fileLength(myfile);
+  char *buf = malloc(PHYSFS_fileLength(myfile) * sizeof(*buf));
+  int length_read = PHYSFS_read(myfile, buf, 1, PHYSFS_fileLength(myfile));
+  error = lodepng_decode_memory(&image, &width, &height, buf, length_read, LCT_RGBA, 8);
   if (error)
   {
     printf("error %u: %s\n", error, lodepng_error_text(error));
@@ -208,6 +244,8 @@ void initBlitScreen(Screenlike *blitscreen)
 
 int main(int argc, char *argv[])
 {
+  PHYSFS_init(argv[0]);
+
   textures = malloc(MAX_TEXTURES * sizeof(*textures));
   palette = malloc(256 * sizeof(*palette));
   for (int i = 0; i < 256; i++)
@@ -215,35 +253,38 @@ int main(int argc, char *argv[])
     Color a = {0, 0, 0};
     palette[i] = a;
   }
-  setvideomode(videomode_320x240);
+
   int font = installuserfont("questmark.fnt");
   settextstyle(font, 0, 0, 0);
   setcolor(144);
+  cursoff();
 
   srand(time(NULL));
-  printf("Loading %s ...\n", argv[1]);
+  cputs("Loading ");
+  cputs(argv[1]);
+  gotoxy(0, wherey() + 1);
   struct json_value_s *root = loadFileGetJSON(argv[1]);
-  printf("File loaded (%d)\n", root->type);
+  cputs("File loaded!");
+  gotoxy(0, wherey() + 1);
   struct json_object_s *rootObj = json_value_as_object(root);
   struct json_array_s *inputProgram = get_object_key_as_array(rootObj, "programList");
   struct json_object_s *labelMap = get_object_key_as_object(rootObj, "labelMap");
-  printf("initing runtime\n");
+  cputs("initing: runtime...");
   initRuntime();
-  printf("initing foreign functions\n");
+  cputs(" foreign functions...");
   registerForeignFunction("drawFrame", &drawFrame);
   registerForeignFunction("beginDraw", &beginDraw);
   registerForeignFunction("endDraw", &endDraw);
   registerForeignFunction("loadImage", &loadImage);
-  printf("initing labelmap\n");
+  cputs(" labelmap...");
   if (labelMap != NULL)
   {
     initLabelMapFromJSONObject(labelMap);
   }
-  printf("- %i", inputProgram->length);
+  cputs(" programlist...");
   initProgramListFromJSONArray(inputProgram);
-
-  clearscr();
-  cursoff();
+  cputs(" ...done!");
+  gotoxy(0, wherey() + 1);
 
   /*
   for (int i = 0; i < 255; i++)
@@ -253,7 +294,52 @@ int main(int argc, char *argv[])
   }
   */
 
-  printf("running!\n");
+  const char *fname = "uqm-0.8.0-content.uqm";
+  FILE *checkFile;
+  if ((checkFile = fopen(fname, "r")) == NULL)
+  {
+    CURL *curl = curl_easy_init();
+    if (curl)
+    {
+      CURLcode res;
+      curl_easy_setopt(curl, CURLOPT_URL, "http://ftp.fau.de/gentoo/distfiles/a5/uqm-0.8.0-content.uqm");
+      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+      cputs("downloading UQM content file...");
+      gotoxy(0, wherey() + 1);
+
+      FILE *contentfile;
+      contentfile = fopen(fname, "wb");
+      if (contentfile)
+      {
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, contentfile);
+        curl_easy_perform(curl);
+        fclose(contentfile);
+      }
+      curl_easy_cleanup(curl);
+    }
+    else
+    {
+      printf("CURL not loaded!? ERROR!");
+      gotoxy(0, wherey() + 1);
+    }
+  }
+  else
+  {
+    cputs("UQM content file found!");
+    gotoxy(0, wherey() + 1);
+    fclose(checkFile);
+  }
+
+  cputs("Mounting .uqm file...");
+  gotoxy(0, wherey() + 1);
+  PHYSFS_mount("uqm-0.8.0-content.uqm", NULL, 0);
+
+  cputs("Mounted! Starting!");
+  gotoxy(0, wherey() + 1);
+  clearscr();
+  setvideomode(videomode_320x240);
+  printf("running!");
+  gotoxy(0, wherey() + 1);
   run();
 
   // got all textures loaded now!

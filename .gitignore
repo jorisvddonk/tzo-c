@@ -3,3 +3,5 @@
 *.exe
 questmark.fnt
 questmark.json
+*.dll
+*.uqm
