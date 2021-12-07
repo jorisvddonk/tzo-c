@@ -5,13 +5,18 @@ project(Tzo VERSION 1.0
                   DESCRIPTION "Tzo runtime VM"
                   LANGUAGES C)
 
+set(ADDITIONAL_LIBRARIES "")
+if(MINGW)
+list(APPEND ADDITIONAL_LIBRARIES "gdi32" "user32" "winmm")
+endif(MINGW)
+
 add_library(tzo STATIC tzo.c)
 
 add_executable(main main.c)
-target_link_libraries(main PUBLIC tzo)
+target_link_libraries(main PUBLIC tzo ${ADDITIONAL_LIBRARIES})
 
 add_executable(test test.c)
-target_link_libraries(test PUBLIC tzo)
+target_link_libraries(test PUBLIC tzo ${ADDITIONAL_LIBRARIES})
 
 FetchContent_Declare(
   doslike
@@ -23,7 +28,7 @@ include_directories(AFTER ${doslike_SOURCE_DIR}/source)
 
 # needs dos-like:
 add_executable(questmark questmark.c ${doslike_SOURCE_DIR}/source/dos.c)
-target_link_libraries(questmark PUBLIC tzo)
+target_link_libraries(questmark PUBLIC tzo ${ADDITIONAL_LIBRARIES})
 
 
 #FetchContent_Declare(
