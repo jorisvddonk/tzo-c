@@ -15,3 +15,33 @@ There's also a TextureVM implementation as well (in `anim.c`):
 ## Here be dragons!
 
 There's absolutely guaranteed to be memory leaks in here as at the moment no variables on the Tzo stack are `free()`'d after use (I have to find a good working strategy for this still), so please don't use this for anything important!
+
+## compiling
+
+Linux:
+
+```sh
+mkdir build
+cd build
+cmake ..
+make
+```
+
+Windows, mingw32:
+
+```powershell
+mkdir build
+cd build
+cmake .. -G "MinGW Makefiles"
+mingw32-make
+```
+
+Windows, Visual Studio 17 (2022):
+
+```powershell
+# note: need to run this in a VS Developer Command Prompt!
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022"
+msbuild ./tzo.sln
+```
