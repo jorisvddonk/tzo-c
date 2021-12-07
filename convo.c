@@ -271,6 +271,27 @@ void initBlitScreen(Screenlike *blitscreen)
   blitscreen->buffer = malloc(blitscreen->height * blitscreen->width * sizeof(uint8_t));
 }
 
+void playMod(TzoVM *vm)
+{
+  Value a = vm->stack[vm->stackSize - 1]; // string
+  char *filename = asString(a);
+  printf("play mod %s\n", filename);
+  if (!PHYSFS_exists(filename))
+  {
+    printf("error: mod file %s does not exist. aborting!\n", filename);
+    exit(1);
+  }
+  PHYSFS_file *myfile = PHYSFS_openRead(filename);
+  PHYSFS_sint64 file_size = PHYSFS_fileLength(myfile);
+  char *buf = malloc(PHYSFS_fileLength(myfile) * sizeof(*buf));
+  int length_read = PHYSFS_read(myfile, buf, 1, PHYSFS_fileLength(myfile));
+  printf("loading...\n");
+  struct music_t *music = loadmod_frombuf(buf, file_size);
+  printf("loaded!\n");
+  playmusic(music, 1, 255);
+  printf("playing!\n");
+}
+
 void response(TzoVM *vm)
 {
   Value a = _pop(vm); // number
@@ -397,6 +418,7 @@ int main(int argc, char *argv[])
   registerForeignFunction(questvm, "emit", &emit);
   registerForeignFunction(questvm, "getResponse", &getresponse);
   registerForeignFunction(questvm, "response", &response);
+  registerForeignFunction(questvm, "_playMod", &playMod);
   cputs(" labelmap...");
   if (labelMap_q != NULL)
   {
@@ -451,9 +473,10 @@ int main(int argc, char *argv[])
     fclose(checkFile);
   }
 
-  cputs("Mounting .uqm file...");
+  cputs("Mounting .uqm file(s)...");
   gotoxy(0, wherey() + 1);
   PHYSFS_mount("uqm-0.8.0-content.uqm", NULL, 0);
+  PHYSFS_mount("P6014-0.2.1-prv-content.uqm", NULL, 0);
 
   cputs("Mounted! Starting!");
   gotoxy(0, wherey() + 1);
