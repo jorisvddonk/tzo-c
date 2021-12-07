@@ -1,7 +1,9 @@
 .vscode/
+build/
 *.out
 *.exe
 questmark.fnt
 questmark.json
 *.dll
 *.uqm
+debug.log
