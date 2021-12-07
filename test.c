@@ -5,22 +5,12 @@
 #include "json_ez.h"
 #include <assert.h>
 
-TzoInstr *program;
-Value *stack;
-int stackSize;
-int programSize;
-int ppc;
-bool running;
-bool exited;
-struct hashmap_s labelmap;
-struct hashmap_s context;
-struct hashmap_s foreignFunctions;
-
 int main(int argc, char *argv[])
 {
   srand(time(NULL));
   printf("Loading %s ...\n", argv[1]);
-  struct json_value_s *root = loadFileGetJSON(argv[1]);
+  TzoVM *vm = createTzoVM();
+  struct json_value_s *root = loadFileGetJSON(vm, argv[1]);
   printf("File loaded (%d)\n", root->type);
 
   struct json_object_s *rootObj = json_value_as_object(root);
@@ -30,8 +20,8 @@ int main(int argc, char *argv[])
   struct json_array_s *expectedStack = get_object_key_as_array(expected, "stack");
   struct json_object_s *expectedContext = get_object_key_as_object(expected, "context");
   printf("-> size: %d\n", inputProgram->length);
-  initRuntime();
-  initProgramListFromJSONArray(inputProgram);
+  initRuntime(vm);
+  initProgramListFromJSONArray(vm, inputProgram);
 
   if (initialContext != NULL)
   {
@@ -40,19 +30,19 @@ int main(int argc, char *argv[])
       const char *key = s->name->string;
       if (json_value_as_string(s->value) != NULL)
       {
-        hashmap_put(&context, key, strlen(key), makeString(json_value_as_string(s->value)->string));
+        hashmap_put(&vm->context, key, strlen(key), makeString(json_value_as_string(s->value)->string));
       }
       else if (json_value_as_number(s->value) != NULL)
       {
         struct json_number_s *n = json_value_as_number(s->value);
         float f = strtof(n->number, NULL);
         Value *num = makeNumber((float)f);
-        hashmap_put(&context, key, strlen(key), num);
+        hashmap_put(&vm->context, key, strlen(key), num);
       }
     }
   }
 
-  run();
+  run(vm);
   printf("Done; running asserts!\n");
 
   if (expectedStack != NULL)
@@ -76,17 +66,17 @@ int main(int argc, char *argv[])
     }
 
     int expectedStackSize = i;
-    assert(("Stack size must be equal", stackSize == expectedStackSize));
+    assert(("Stack size must be equal", vm->stackSize == expectedStackSize));
     for (i = 0; i < expectedStackSize; i++)
     {
-      assert(("Type must be equal", stack[i].type == expectedStackV[i].type));
-      if (stack[i].type == String)
+      assert(("Type must be equal", vm->stack[i].type == expectedStackV[i].type));
+      if (vm->stack[i].type == String)
       {
-        assert(("String value must be equal", strcmp(stack[i].string_value, expectedStackV[i].string_value) == 0));
+        assert(("String value must be equal", strcmp(vm->stack[i].string_value, expectedStackV[i].string_value) == 0));
       }
-      if (stack[i].type == Number)
+      if (vm->stack[i].type == Number)
       {
-        assert(("Number value must be equal", stack[i].number_value == expectedStackV[i].number_value)); // TODO: fix float comparison!
+        assert(("Number value must be equal", vm->stack[i].number_value == expectedStackV[i].number_value)); // TODO: fix float comparison!
       }
     }
   }
@@ -96,7 +86,7 @@ int main(int argc, char *argv[])
     for (struct json_object_element_s *s = expectedContext->start; s != NULL; s = s->next)
     {
       const char *key = s->name->string;
-      Value *val = (Value *)hashmap_get(&context, key, strlen(key));
+      Value *val = (Value *)hashmap_get(&vm->context, key, strlen(key));
       if (json_value_as_string(s->value) != NULL)
       {
         assert(("Type must be equal (String)", val->type == String));
