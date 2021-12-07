@@ -10,6 +10,14 @@ if(MINGW)
 list(APPEND ADDITIONAL_LIBRARIES "gdi32" "user32" "winmm")
 endif(MINGW)
 
+# raylib:
+# Checks if OSX and links appropriate frameworks (Only required on MacOS)
+if (APPLE)
+    target_link_libraries(${PROJECT_NAME} "-framework IOKit")
+    target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
+    target_link_libraries(${PROJECT_NAME} "-framework OpenGL")
+endif()
+
 add_library(tzo STATIC tzo.c)
 
 add_executable(main main.c)
@@ -42,3 +50,35 @@ target_link_libraries(questmark PUBLIC tzo ${ADDITIONAL_LIBRARIES})
 # needs modded dos-like, libcurl, lode-png and physfs
 #add_executable(convo convo.c ${doslike_SOURCE_DIR}/source/dos.c ${lodepng_SOURCE_DIR}/lodepng.cpp)
 #target_link_libraries(convo PUBLIC tzo)
+
+find_package(raylib 4.0 QUIET)
+if (NOT raylib_FOUND)
+  include(FetchContent)
+
+  FetchContent_Declare(
+    raylib
+    URL https://github.com/raysan5/raylib/archive/refs/tags/4.0.0.tar.gz
+  )
+
+  FetchContent_GetProperties(raylib)
+  if (NOT raylib_POPULATED)
+    set(FETCHCONTENT_QUIET NO)
+    FetchContent_Populate(raylib)
+
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE) # don't build the supplied examples
+    add_subdirectory(${raylib_SOURCE_DIR} ${raylib_BINARY_DIR})
+
+  endif()
+
+endif()
+
+FetchContent_Declare(
+  physfs
+  GIT_REPOSITORY https://github.com/icculus/physfs.git
+  GIT_TAG a0dfe220ffb97eef2c78fef2b8971995f221b18d
+)
+FetchContent_MakeAvailable(physfs)
+include_directories(AFTER ${physfs_SOURCE_DIR}/src)
+
+add_executable(rconvo rconvo.c)
+target_link_libraries(rconvo PUBLIC tzo ${ADDITIONAL_LIBRARIES} raylib PRIVATE physfs-static)
