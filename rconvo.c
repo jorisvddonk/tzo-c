@@ -2,6 +2,7 @@
 #include "tzo.h"
 #include "json_ez.h"
 #include "physfs.h"
+#include <stdio.h>
 
 #define MAX_TEXTURES 128
 

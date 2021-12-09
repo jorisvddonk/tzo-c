@@ -10,14 +10,6 @@ if(MINGW)
 list(APPEND ADDITIONAL_LIBRARIES "gdi32" "user32" "winmm")
 endif(MINGW)
 
-# raylib:
-# Checks if OSX and links appropriate frameworks (Only required on MacOS)
-if (APPLE)
-    target_link_libraries(${PROJECT_NAME} "-framework IOKit")
-    target_link_libraries(${PROJECT_NAME} "-framework Cocoa")
-    target_link_libraries(${PROJECT_NAME} "-framework OpenGL")
-endif()
-
 add_library(tzo STATIC tzo.c)
 
 add_executable(main main.c)
@@ -82,3 +74,10 @@ include_directories(AFTER ${physfs_SOURCE_DIR}/src)
 
 add_executable(rconvo rconvo.c)
 target_link_libraries(rconvo PUBLIC tzo ${ADDITIONAL_LIBRARIES} raylib PRIVATE physfs-static)
+# raylib:
+# Checks if OSX and links appropriate frameworks (Only required on MacOS)
+if (APPLE)
+    target_link_libraries(rconvo PRIVATE "-framework IOKit")
+    target_link_libraries(rconvo PRIVATE "-framework Cocoa")
+    target_link_libraries(rconvo PRIVATE "-framework OpenGL")
+endif()
