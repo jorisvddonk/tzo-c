@@ -29,6 +29,12 @@ void _push(TzoVM *vm, Value val)
     vm->stackSize += 1;
 }
 
+Value _top(TzoVM *vm)
+{
+    Value val = vm->stack[vm->stackSize - 1];
+    return val;
+}
+
 Value _pop(TzoVM *vm)
 {
     Value val = vm->stack[vm->stackSize - 1];
@@ -585,17 +591,17 @@ void step(TzoVM *vm)
 {
     if (vm->program[vm->ppc].type == push_string)
     {
-        //printf("->%s\n", program[ppc].value->string_value);
+        // printf("->%s\n", program[ppc].value->string_value);
         _push(vm, *makeString(vm->program[vm->ppc].value->string_value));
     }
     if (vm->program[vm->ppc].type == push_number)
     {
-        //printf("->%f\n", program[ppc].value->number_value);
+        // printf("->%f\n", program[ppc].value->number_value);
         _push(vm, *makeNumber(vm->program[vm->ppc].value->number_value));
     }
     if (vm->program[vm->ppc].type == invoke_function)
     {
-        //printf("->FUNC\n");
+        // printf("->FUNC\n");
         vm->program[vm->ppc].function_pointer(vm);
     }
     vm->ppc = vm->ppc + 1;

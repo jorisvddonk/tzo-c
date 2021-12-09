@@ -69,6 +69,7 @@ void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj);
 void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array);
 void registerForeignFunction(TzoVM *vm, char *name, void *func);
 void _push(TzoVM *vm, Value val);
+Value _top(TzoVM *vm);
 Value _pop(TzoVM *vm);
 Value _popS(TzoVM *vm);
 
