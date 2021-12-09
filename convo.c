@@ -476,10 +476,7 @@ int main(int argc, char *argv[])
         Value num = *makeNumber(ans->pc);
         _push(questvm, num);
         int *value = 0;
-        if (0 != hashmap_iterate_pairs(&responseMap, clearResponse, &value))
-        {
-          cputs("failed to deallocate hashmap entries!!\n");
-        }
+        clearResponseMap();
         resume(questvm);
         lastStroke = 10;
         clearCollectedText();

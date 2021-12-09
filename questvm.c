@@ -49,6 +49,15 @@ int clearResponse(void *const context, struct hashmap_element_s *const e)
   return -1;
 }
 
+void clearResponseMap()
+{
+  int *ptr;
+  if (0 != hashmap_iterate_pairs(&responseMap, clearResponse, &ptr))
+  {
+    cputs("failed to deallocate hashmap entries!!\n");
+  }
+}
+
 struct hashmap_s getResponseMap()
 {
   return responseMap;

@@ -205,10 +205,32 @@ int main(int argc, char *argv[])
         {
             UpdateMusicStream(music.music);
         }
+
+        struct hashmap_s responseMap = getResponseMap();
+        int key = GetKeyPressed();
+        if (key != 0 && !questvm->running)
+        {
+            char *k = toStringC(key);
+            Answer *ans = hashmap_get(&responseMap, k, strlen(k));
+            if (ans != NULL)
+            {
+                Value num = *makeNumber(ans->pc);
+                _push(questvm, num);
+                int *value = 0;
+                clearResponseMap();
+                resume(questvm);
+                clearCollectedText();
+            }
+        }
+
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
         run(vm);
+        if (questvm->running)
+        {
+            run(questvm);
+        }
         drawResponses();
 
         EndDrawing();
