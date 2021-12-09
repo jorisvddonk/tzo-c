@@ -9,6 +9,7 @@ clang -target x86_64-pc-windows-gnu \
   -g3 \
   convo.c \
   tzo.c \
+  questvm.c \
   <PATH_TO_DOS-LIKE>/source/dos.c \
   <PATH_TO_LODEPNG>/lodepng.c \
   <PATH_TO_LIBCURL>/bin/libcurl-x64.dll \
@@ -32,6 +33,7 @@ To run:
 #include "lodepng.h"
 #include <curl/curl.h>
 #include "physfs.h"
+#include "questvm.h"
 
 #define TEXT_COLOR_GAMETEXT 1
 #define TEXT_COLOR_OPTIONTEXT 2
@@ -39,7 +41,6 @@ To run:
 #define PALETTE_START 4
 #define MAX_TEXTURES 128
 
-struct hashmap_s responseMap;
 int text_x = 0;
 int text_y = 0;
 
@@ -48,11 +49,6 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
   size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
   return written;
 }
-typedef struct
-{
-  int pc;
-  char *response;
-} Answer;
 
 typedef struct
 {
@@ -84,8 +80,6 @@ Color *palette;
 int nextslot = 4;
 bool first = true;
 
-char *collectedText;
-int collectedTextPtr = 0;
 int lastStroke = 0;
 
 int frame = 0;
@@ -292,36 +286,10 @@ void playMod(TzoVM *vm)
   printf("playing!\n");
 }
 
-void response(TzoVM *vm)
-{
-  Value a = _pop(vm); // number
-  Value b = _pop(vm); // string
-  int pc = a.number_value;
-  char *str = asString(b);
-  Answer *ans = malloc(sizeof *ans);
-  ans->pc = pc;
-  ans->response = str;
-
-  int v = hashmap_num_entries(&responseMap) + 1;
-  char *key = toString(v);
-  hashmap_put(&responseMap, key, strlen(key), ans);
-}
-
-void emit(TzoVM *vm)
-{
-  char *str = asString(_pop(vm));
-  printf("%s ", str);
-  sprintf(collectedText, "%s%s", collectedText, str);
-}
-
-int clearResponse(void *const context, struct hashmap_element_s *const e)
-{
-  return -1;
-}
-
 void drawResponses()
 {
   setcolor(TEXT_COLOR_OPTIONTEXT);
+  struct hashmap_s responseMap = getResponseMap();
   int size = hashmap_num_entries(&responseMap);
   text_x = 0;
   text_y = 35 - size; // TODO: calculate based on total number of lines actually used for the *text rendering*
@@ -351,12 +319,7 @@ int main(int argc, char *argv[])
   TzoVM *vm = createTzoVM();
   TzoVM *questvm = createTzoVM();
 
-  if (0 != hashmap_create(32, &responseMap))
-  {
-    assert(("failed to create responseMap hashmap", 0));
-  }
-  collectedText = malloc(1024 * 4 * sizeof(*collectedText));
-  memset(collectedText, 0, 1024 * 4);
+  initQuestVM();
 
   textures = malloc(MAX_TEXTURES * sizeof(*textures));
   palette = malloc(256 * sizeof(*palette));
@@ -514,6 +477,7 @@ int main(int argc, char *argv[])
   {
     waitvbl();
     char key = *readchars();
+    struct hashmap_s responseMap = getResponseMap();
     if (keystate(KEY_ESCAPE))
     {
       break;
@@ -533,7 +497,7 @@ int main(int argc, char *argv[])
         }
         resume(questvm);
         lastStroke = 10;
-        memset(collectedText, 0, 1024 * 4);
+        clearCollectedText();
       }
     }
 
@@ -547,7 +511,7 @@ int main(int argc, char *argv[])
     {
       clearscr();
       setcolor(TEXT_COLOR_GAMETEXT);
-      drawtext(collectedText);
+      drawtext(getCollectedText());
       drawResponses();
       run(vm);
       if (questvm->running)
