@@ -4,7 +4,23 @@
 #include <assert.h>
 
 struct hashmap_s responseMap;
-char *collectedText;
+static char *collectedText;
+
+char *toString(int i)
+{
+  size_t needed = snprintf(NULL, 0, "%i", i) + 1;
+  char *key = malloc(needed);
+  sprintf(key, "%i", i);
+  return key;
+}
+
+char *toStringC(int i)
+{
+  size_t needed = snprintf(NULL, 0, "%c", i) + 1;
+  char *key = malloc(needed);
+  sprintf(key, "%c", i);
+  return key;
+}
 
 void response(TzoVM *vm)
 {

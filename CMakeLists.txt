@@ -72,7 +72,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(physfs)
 include_directories(AFTER ${physfs_SOURCE_DIR}/src)
 
-add_executable(rconvo rconvo.c)
+add_executable(rconvo rconvo.c questvm.c)
 target_link_libraries(rconvo PUBLIC tzo ${ADDITIONAL_LIBRARIES} raylib PRIVATE physfs-static)
 # raylib:
 # Checks if OSX and links appropriate frameworks (Only required on MacOS)

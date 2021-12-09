@@ -13,3 +13,4 @@ struct hashmap_s getResponseMap();
 void initQuestVM();
 char *getCollectedText();
 void clearCollectedText();
+char *toString(int i);

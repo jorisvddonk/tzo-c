@@ -16,7 +16,7 @@ clang -target x86_64-pc-windows-gnu \
   <PATH_TO_PHYSFS>/build/libphysfs.dll \
   -lgdi32 -luser32 -lwinmm \
   -o convo.exe
-  
+
 To run:
 1. make sure you have required .dll files available here
 2. ./convo.exe ./yehat.json ./yehat_speech.json
@@ -106,7 +106,7 @@ void m_blit(int x, int y, unsigned char *source, int width, int height, int srcx
 
 void drawtext(char *str)
 {
-  //cputs("%s (%i, %i)", str, text_x, text_y);
+  // cputs("%s (%i, %i)", str, text_x, text_y);
   outtextxy(text_x * 4, text_y * 12, str);
   int numnl = 0;
   int strl = strlen(str);
@@ -118,7 +118,7 @@ void drawtext(char *str)
     }
   }
   text_y = text_y + numnl + 1;
-  //cputs("--%i (%i, %i)\n", numnl, text_x, text_y);
+  // cputs("--%i (%i, %i)\n", numnl, text_x, text_y);
 }
 
 void clearscr()
@@ -128,21 +128,6 @@ void clearscr()
   text_y = 10;
   setcolor(TEXT_COLOR_HEADER);
 };
-
-char *toString(int i)
-{
-  size_t needed = sprintf(NULL, 0, "%i", i) + 1;
-  char *key = malloc(needed);
-  sprintf(key, "%i", i);
-  return key;
-}
-char *toStringC(int i)
-{
-  size_t needed = sprintf(NULL, 0, "%c", i) + 1;
-  char *key = malloc(needed);
-  sprintf(key, "%c", i);
-  return key;
-}
 
 void drawFrame(TzoVM *vm)
 {

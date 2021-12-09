@@ -1,8 +1,9 @@
+#include <stdlib.h>
 #include "raylib.h"
 #include "tzo.h"
 #include "json_ez.h"
 #include "physfs.h"
-#include <stdio.h>
+#include "questvm.h"
 
 #define MAX_TEXTURES 128
 
@@ -82,7 +83,7 @@ void endDraw(TzoVM *vm)
 
 AMusic music = {false, NULL};
 
-void playMusic(TzoVM *vm)
+void playMod(TzoVM *vm)
 {
     char *f = asString(_top(vm));
     char filename[256];
@@ -98,6 +99,33 @@ void playMusic(TzoVM *vm)
     music.music.looping = true;
     music.haveMusic = true;
     PlayMusicStream(music.music);
+}
+
+void drawResponses()
+{
+    struct hashmap_s responseMap = getResponseMap();
+    int size = hashmap_num_entries(&responseMap);
+    int text_x = 0;
+    int text_y = 500 - (size * (16 + 5)); // TODO: calculate based on total number of lines actually used for the *text rendering*
+    for (int i = 1; i <= size; i++)
+    {
+        char *k = toString(i);
+        Answer *ans = hashmap_get(&responseMap, k, strlen(k));
+        if (ans != NULL)
+        {
+            text_x = 0;
+            char tmp[512];
+            sprintf(tmp, "%s - %s", k, ans->response);
+            DrawText(tmp, text_x, text_y, 16, BLUE);
+            text_y += 16;
+        }
+    }
+}
+
+void getresponse(TzoVM *vm)
+{
+    pause(vm);
+    drawResponses();
 }
 
 int main(int argc, char *argv[])
@@ -129,7 +157,7 @@ int main(int argc, char *argv[])
     registerForeignFunction(vm, "beginDraw", &beginDraw);
     registerForeignFunction(vm, "endDraw", &endDraw);
     registerForeignFunction(vm, "loadImage", &loadImage);
-    registerForeignFunction(vm, "_playMusic", &playMusic);
+    registerForeignFunction(vm, "_playMod", &playMod);
     printf(" labelmap...");
     if (labelMap != NULL)
     {
@@ -139,9 +167,35 @@ int main(int argc, char *argv[])
     initProgramListFromJSONArray(vm, inputProgram);
     printf(" ...done!");
 
+    printf("Loading questvm ");
+    initQuestVM();
+    printf(argv[2]);
+    struct json_value_s *root_q = loadFileGetJSON(questvm, argv[2]);
+    printf("File loaded!");
+    struct json_object_s_q *rootObj_q = json_value_as_object(root_q);
+    struct json_array_s_q *inputProgram_q = get_object_key_as_array(rootObj_q, "programList");
+    struct json_object_s_q *labelMap_q = get_object_key_as_object(rootObj_q, "labelMap");
+    printf("initing: runtime...");
+    initRuntime(questvm);
+    printf(" foreign functions...");
+    registerForeignFunction(questvm, "emit", &emit);
+    registerForeignFunction(questvm, "getResponse", &getresponse);
+    registerForeignFunction(questvm, "response", &response);
+    registerForeignFunction(questvm, "_playMod", &playMod);
+    printf(" labelmap...");
+    if (labelMap_q != NULL)
+    {
+        initLabelMapFromJSONObject(questvm, labelMap_q);
+    }
+    printf(" programlist...");
+    initProgramListFromJSONArray(questvm, inputProgram_q);
+    printf(" ...done!");
+
     printf("running!");
     run(vm);
     printf("loaded stuff");
+    run(questvm);
+    printf("started questvm");
 
     SetTargetFPS(60);
 
@@ -155,6 +209,7 @@ int main(int argc, char *argv[])
 
         ClearBackground(RAYWHITE);
         run(vm);
+        drawResponses();
 
         EndDrawing();
     }
