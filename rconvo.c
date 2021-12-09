@@ -15,6 +15,12 @@ typedef struct
     Texture2D tex;
 } ATexture;
 
+typedef struct AMusic
+{
+    bool haveMusic;
+    Music music;
+} AMusic;
+
 ATexture *textures;
 int nextTexture = 0;
 
@@ -30,7 +36,6 @@ void drawFrame(TzoVM *vm)
     int n = frame_index.number_value;
     ATexture t = textures[n];
     DrawTexture(t.tex, 0 - t.hotspot_x, 0 - t.hotspot_y, RAYWHITE);
-    //m_blit(0 - t.hotspot_x, 0 - t.hotspot_y, t.textureRef, t.width, t.height, 0, 0, t.width, t.height, -1, blit_screen_0);
 }
 
 void loadImage(TzoVM *vm)
@@ -59,22 +64,6 @@ void loadImage(TzoVM *vm)
     ATexture t = {(int)hotspot_x.number_value, (int)hotspot_y.number_value, tex.width, tex.height, tex};
     textures[nextTexture] = t;
     nextTexture++;
-
-    /*
-    error = lodepng_decode_memory(&image, &width, &height, buf, length_read, LCT_RGBA, 8);
-    if (error)
-    {
-        printf("error %u: %s\n", error, lodepng_error_text(error));
-    }
-    else
-    {
-        char *img = malloc((width * height) * sizeof(*img));
-        rgba_to_palette(image, img, (width * height));
-        Texture t = {(int)hotspot_x.number_value, (int)hotspot_y.number_value, width, height, img};
-        textures[nextTexture] = t;
-        nextTexture++;
-    }
-    */
 }
 
 void beginDraw(TzoVM *vm)
@@ -91,10 +80,31 @@ void endDraw(TzoVM *vm)
     DrawTexturePro(target.texture, rec, recd, vec, 0.0, WHITE);
 }
 
+AMusic music = {false, NULL};
+
+void playMusic(TzoVM *vm)
+{
+    char *f = asString(_top(vm));
+    char filename[256];
+    sprintf(filename, "%s", f);
+    printf("loading %s", filename);
+    PHYSFS_file *modfile = PHYSFS_openRead(filename);
+    PHYSFS_sint64 file_size = PHYSFS_fileLength(modfile);
+    char *buf = malloc(PHYSFS_fileLength(modfile) * sizeof(*buf));
+    int length_read = PHYSFS_read(modfile, buf, 1, PHYSFS_fileLength(modfile));
+
+    Music mus = LoadMusicStreamFromMemory(".mod", buf, length_read);
+    music.music = mus;
+    music.music.looping = true;
+    music.haveMusic = true;
+    PlayMusicStream(music.music);
+}
+
 int main(int argc, char *argv[])
 {
     PHYSFS_init(argv[0]);
     InitWindow(800, 600, "Convo Test");
+    InitAudioDevice();
 
     PHYSFS_mount("uqm-0.8.0-content.uqm", NULL, 0);
 
@@ -119,6 +129,7 @@ int main(int argc, char *argv[])
     registerForeignFunction(vm, "beginDraw", &beginDraw);
     registerForeignFunction(vm, "endDraw", &endDraw);
     registerForeignFunction(vm, "loadImage", &loadImage);
+    registerForeignFunction(vm, "_playMusic", &playMusic);
     printf(" labelmap...");
     if (labelMap != NULL)
     {
@@ -136,6 +147,10 @@ int main(int argc, char *argv[])
 
     while (!WindowShouldClose())
     {
+        if (music.haveMusic)
+        {
+            UpdateMusicStream(music.music);
+        }
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
