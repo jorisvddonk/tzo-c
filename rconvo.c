@@ -83,6 +83,11 @@ void endDraw(TzoVM *vm)
 
 AMusic music = {false, NULL};
 
+void emit_i(TzoVM *vm)
+{
+    emit(vm);
+}
+
 void playMod(TzoVM *vm)
 {
     char *f = asString(_top(vm));
@@ -101,7 +106,13 @@ void playMod(TzoVM *vm)
     PlayMusicStream(music.music);
 }
 
-void drawResponses()
+void drawResponse()
+{
+    char *text = getCollectedText();
+    DrawText(text, 10, 10, 16, WHITE);
+}
+
+void drawOptions()
 {
     struct hashmap_s responseMap = getResponseMap();
     int size = hashmap_num_entries(&responseMap);
@@ -125,7 +136,7 @@ void drawResponses()
 void getresponse(TzoVM *vm)
 {
     pause(vm);
-    drawResponses();
+    drawOptions();
 }
 
 int main(int argc, char *argv[])
@@ -178,7 +189,7 @@ int main(int argc, char *argv[])
     printf("initing: runtime...");
     initRuntime(questvm);
     printf(" foreign functions...");
-    registerForeignFunction(questvm, "emit", &emit);
+    registerForeignFunction(questvm, "emit", &emit_i);
     registerForeignFunction(questvm, "getResponse", &getresponse);
     registerForeignFunction(questvm, "response", &response);
     registerForeignFunction(questvm, "_playMod", &playMod);
@@ -231,7 +242,8 @@ int main(int argc, char *argv[])
         {
             run(questvm);
         }
-        drawResponses();
+        drawResponse();
+        drawOptions();
 
         EndDrawing();
     }
