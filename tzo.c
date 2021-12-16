@@ -459,16 +459,16 @@ struct json_value_s *loadFileGetJSON(TzoVM *vm, char *filename)
 
 void initRuntime(TzoVM *vm)
 {
-    const unsigned initial_size = 64;
-    if (0 != hashmap_create(initial_size, &vm->labelmap))
+    const unsigned initial_size = 128;
+    if (0 != hashmap_create(initial_size, &(vm->labelmap)))
     {
         assert(("failed to create label hashmap", 0));
     }
-    if (0 != hashmap_create(initial_size, &vm->context))
+    if (0 != hashmap_create(initial_size, &(vm->context)))
     {
         assert(("failed to create context hashmap", 0));
     }
-    if (0 != hashmap_create(initial_size, &vm->foreignFunctions))
+    if (0 != hashmap_create(initial_size, &(vm->foreignFunctions)))
     {
         assert(("failed to create foreignFunctions hashmap", 0));
     }
