@@ -28,7 +28,7 @@ To run:
 #include <time.h>
 #include "tzo.h"
 #include "json_ez.h"
-#include "dos.h" // https://github.com/mattiasgustavsson/dos-like
+#include "doslike_additions.h"
 #include <assert.h>
 #include "lodepng.h"
 #include <curl/curl.h>

@@ -1,4 +1,10 @@
 cmake_minimum_required(VERSION 3.14)
+
+if(ADDITIONAL_CMAKE_TOOLCHAIN)
+  include(${ADDITIONAL_CMAKE_TOOLCHAIN})
+endif(ADDITIONAL_CMAKE_TOOLCHAIN)
+
+
 include(FetchContent)
 
 project(Tzo VERSION 1.0
@@ -26,22 +32,21 @@ FetchContent_Declare(
 FetchContent_Populate(doslike)
 include_directories(AFTER ${doslike_SOURCE_DIR}/source)
 
-# needs dos-like:
-add_executable(questmark questmark.c ${doslike_SOURCE_DIR}/source/dos.c)
+add_executable(questmark questmark.c doslike_additions.c)
 target_link_libraries(questmark PUBLIC tzo ${ADDITIONAL_LIBRARIES})
 
+find_package(CURL CONFIG REQUIRED)
+FetchContent_Declare(
+  lodepng
+  GIT_REPOSITORY https://github.com/lvandeve/lodepng.git
+  GIT_TAG 8c6a9e30576f07bf470ad6f09458a2dcd7a6a84a
+)
+FetchContent_Populate(lodepng)
+include_directories(AFTER ${lodepng_SOURCE_DIR})
+set_source_files_properties(${lodepng_SOURCE_DIR}/lodepng.cpp PROPERTIES LANGUAGE C)
 
-#FetchContent_Declare(
-#  lodepng
-#  GIT_REPOSITORY https://github.com/lvandeve/lodepng.git
-#  GIT_TAG 8c6a9e30576f07bf470ad6f09458a2dcd7a6a84a
-#)
-#FetchContent_Populate(lodepng)
-#include_directories(AFTER ${lodepng_SOURCE_DIR})
-
-# needs modded dos-like, libcurl, lode-png and physfs
-#add_executable(convo convo.c ${doslike_SOURCE_DIR}/source/dos.c ${lodepng_SOURCE_DIR}/lodepng.cpp)
-#target_link_libraries(convo PUBLIC tzo)
+add_executable(convo convo.c questvm.c doslike_additions.c ${lodepng_SOURCE_DIR}/lodepng.cpp)
+target_link_libraries(convo PUBLIC tzo ${ADDITIONAL_LIBRARIES} PRIVATE CURL::libcurl physfs-static)
 
 find_package(raylib 4.0 QUIET)
 if (NOT raylib_FOUND)
