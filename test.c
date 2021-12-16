@@ -30,14 +30,14 @@ int main(int argc, char *argv[])
       const char *key = s->name->string;
       if (json_value_as_string(s->value) != NULL)
       {
-        hashmap_put(&vm->context, key, strlen(key), makeString(json_value_as_string(s->value)->string));
+        hashmap_put(&(vm->context), key, strlen(key), makeString(json_value_as_string(s->value)->string));
       }
       else if (json_value_as_number(s->value) != NULL)
       {
         struct json_number_s *n = json_value_as_number(s->value);
         float f = strtof(n->number, NULL);
         Value *num = makeNumber((float)f);
-        hashmap_put(&vm->context, key, strlen(key), num);
+        hashmap_put(&(vm->context), key, strlen(key), num);
       }
     }
   }
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     for (struct json_object_element_s *s = expectedContext->start; s != NULL; s = s->next)
     {
       const char *key = s->name->string;
-      Value *val = (Value *)hashmap_get(&vm->context, key, strlen(key));
+      Value *val = (Value *)hashmap_get(&(vm->context), key, strlen(key));
       if (json_value_as_string(s->value) != NULL)
       {
         assert(("Type must be equal (String)", val->type == String));

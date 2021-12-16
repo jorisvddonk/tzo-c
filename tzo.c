@@ -391,7 +391,7 @@ void i_goto(TzoVM *vm)
     }
     else if (a.type == String)
     {
-        int i = hashmap_get(&vm->labelmap, a.string_value, strlen(a.string_value));
+        int i = hashmap_get(&(vm->labelmap), a.string_value, strlen(a.string_value));
         vm->ppc = i - 1;
     }
 }
@@ -403,11 +403,11 @@ void i_setContext(TzoVM *vm)
     char *key = a.string_value;
     if (b.type == String)
     {
-        hashmap_put(&vm->context, key, strlen(key), makeString(b.string_value));
+        hashmap_put(&(vm->context), key, strlen(key), makeString(b.string_value));
     }
     else if (b.type == Number)
     {
-        hashmap_put(&vm->context, key, strlen(key), makeNumber(b.number_value));
+        hashmap_put(&(vm->context), key, strlen(key), makeNumber(b.number_value));
     }
 }
 
@@ -415,7 +415,7 @@ void i_getContext(TzoVM *vm)
 {
     Value a = _pop(vm);
     char *key = a.string_value;
-    Value *val = (Value *)hashmap_get(&vm->context, a.string_value, strlen(a.string_value));
+    Value *val = (Value *)hashmap_get(&(vm->context), a.string_value, strlen(a.string_value));
     _push(vm, *val);
 }
 
@@ -423,7 +423,7 @@ void i_hasContext(TzoVM *vm)
 {
     Value a = _pop(vm);
     char *key = a.string_value;
-    void *const element = hashmap_get(&vm->context, a.string_value, strlen(a.string_value));
+    void *const element = hashmap_get(&(vm->context), a.string_value, strlen(a.string_value));
     if (element == NULL)
     {
         _push(vm, *makeNumber(0));
@@ -438,7 +438,7 @@ void i_delContext(TzoVM *vm)
 {
     Value a = _pop(vm);
     char *key = a.string_value;
-    hashmap_remove(&vm->context, a.string_value, strlen(a.string_value));
+    hashmap_remove(&(vm->context), a.string_value, strlen(a.string_value));
 }
 
 struct json_value_s *loadFileGetJSON(TzoVM *vm, char *filename)
@@ -484,7 +484,7 @@ void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj)
             struct json_number_s *n = json_value_as_number(s->value);
             float f = strtof(n->number, NULL);
             int i = (int)f;
-            hashmap_put(&vm->labelmap, key, strlen(key), i);
+            hashmap_put(&(vm->labelmap), key, strlen(key), i);
         }
     }
 }
@@ -522,7 +522,7 @@ void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array)
             else if (0 == strcmp(oe->name->string, "label"))
             {
                 char *key = json_value_as_string(oe->value)->string;
-                hashmap_put(&vm->labelmap, key, strlen(key), piPointer);
+                hashmap_put(&(vm->labelmap), key, strlen(key), piPointer);
             }
             else if (0 == strcmp(oe->name->string, "value"))
             {
@@ -576,7 +576,7 @@ void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array)
                 bind_function(vm, "hasContext", &i_hasContext);
                 bind_function(vm, "delContext", &i_delContext);
 
-                void *const element = hashmap_get(&vm->foreignFunctions, json_value_as_string(oe->value)->string, strlen(json_value_as_string(oe->value)->string));
+                void *const element = hashmap_get(&(vm->foreignFunctions), json_value_as_string(oe->value)->string, strlen(json_value_as_string(oe->value)->string));
                 if (element != NULL)
                 {
                     vm->program[piPointer].function_pointer = element;
@@ -619,7 +619,7 @@ void run(TzoVM *vm)
 
 void registerForeignFunction(TzoVM *vm, char *name, void *func)
 {
-    hashmap_put(&vm->foreignFunctions, name, strlen(name), func);
+    hashmap_put(&(vm->foreignFunctions), name, strlen(name), func);
 }
 
 void pause(TzoVM *vm)
