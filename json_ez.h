@@ -1,3 +1,5 @@
+#ifndef JSON_EZ_H
+#define JSON_EZ_H
 #include "thirdparty/json.h"
 
 struct json_value_s *get_object_key_v(struct json_object_s *obj, char *key)
@@ -41,3 +43,5 @@ struct json_string_s *get_object_key_as_string(struct json_object_s *obj, char *
   }
   return NULL;
 }
+
+#endif
