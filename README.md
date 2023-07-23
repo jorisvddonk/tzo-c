@@ -45,3 +45,7 @@ cd build
 cmake .. -G "Visual Studio 17 2022"
 msbuild ./tzo.sln
 ```
+
+## compiling the other samples
+
+To compile the other samples, use `-DBUILD_CONVO` or `-DBUILD_RCONVO` when generating te project files via cmake.
