@@ -12,6 +12,9 @@ project(Tzo VERSION 1.0
                   LANGUAGES C)
 
 set(ADDITIONAL_LIBRARIES "")
+if (UNIX)
+list(APPEND ADDITIONAL_LIBRARIES "m")
+endif (UNIX)
 if(MINGW)
 list(APPEND ADDITIONAL_LIBRARIES "gdi32" "user32" "winmm")
 endif(MINGW)
