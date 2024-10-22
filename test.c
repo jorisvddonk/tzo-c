@@ -3,17 +3,14 @@
 #include <time.h>
 #include "tzo.h"
 #include "json_ez.h"
-#include <assert.h>
+#define TESTFW_IMPLEMENTATION
+#include "thirdparty/testfw.h"
 
-void check(char *msg, bool condition) {
-  if (condition == false) {
-    printf("Check failed: %s\n", msg);
-    exit(1);
-  }
-}
+#define check( msg, expression ) TESTFW_TEST_BEGIN(msg); testfw_expected( (expression) ? 1 : 0, #expression, __FILE__, __func__, __LINE__ ); TESTFW_TEST_END();
 
 int main(int argc, char *argv[])
 {
+  TESTFW_INIT();
   srand(time(NULL));
   printf("Loading %s ...\n", argv[1]);
   TzoVM *vm = createTzoVM();
@@ -110,7 +107,5 @@ int main(int argc, char *argv[])
     }
   }
 
-  printf("Done! Tests OK!\n");
-  printf(".\n");
-  return (0);
+  return TESTFW_SUMMARY();
 }
