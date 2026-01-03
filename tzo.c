@@ -407,7 +407,7 @@ void i_goto(TzoVM *vm)
     }
     else if (a.type == String)
     {
-        int i = hashmap_get(&(vm->labelmap), a.string_value, strlen(a.string_value));
+        int i = (int)(long)hashmap_get(&(vm->labelmap), a.string_value, strlen(a.string_value));
         vm->ppc = i - 1;
     }
 }
@@ -500,7 +500,7 @@ void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj)
             struct json_number_s *n = json_value_as_number(s->value);
             float f = strtof(n->number, NULL);
             int i = (int)f;
-            hashmap_put(&(vm->labelmap), key, strlen(key), i);
+            hashmap_put(&(vm->labelmap), key, strlen(key), (void *)(long)i);
         }
     }
 }
@@ -538,7 +538,7 @@ void initProgramListFromJSONArray(TzoVM *vm, struct json_array_s *array)
             else if (0 == strcmp(oe->name->string, "label"))
             {
                 char *key = json_value_as_string(oe->value)->string;
-                hashmap_put(&(vm->labelmap), key, strlen(key), piPointer);
+                hashmap_put(&(vm->labelmap), key, strlen(key), (void *)(long)piPointer);
             }
             else if (0 == strcmp(oe->name->string, "value"))
             {

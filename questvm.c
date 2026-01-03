@@ -54,7 +54,7 @@ void clearResponseMap()
   int *ptr;
   if (0 != hashmap_iterate_pairs(&responseMap, clearResponse, &ptr))
   {
-    cputs("failed to deallocate hashmap entries!!\n");
+    puts("failed to deallocate hashmap entries!!\n");
   }
 }
 

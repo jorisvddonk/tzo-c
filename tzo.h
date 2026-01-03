@@ -28,6 +28,8 @@ typedef enum
   Number = 1,
 } ValueType;
 
+typedef struct TzoVM TzoVM;
+
 typedef struct
 {
   ValueType type;
@@ -39,10 +41,10 @@ typedef struct
 {
   InstructionType type;
   Value *value;
-  void (*function_pointer)();
+  void (*function_pointer)(TzoVM *);
 } TzoInstr;
 
-typedef struct
+struct TzoVM
 {
   TzoInstr *program;
   Value *stack;
@@ -54,7 +56,7 @@ typedef struct
   struct hashmap_s labelmap;
   struct hashmap_s context;
   struct hashmap_s foreignFunctions;
-} TzoVM;
+};
 
 /////////////////////////////////////////////////
 
