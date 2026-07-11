@@ -39,8 +39,8 @@ int main(int argc, char *argv[])
       else if (json_value_as_number(s->value) != NULL)
       {
         struct json_number_s *n = json_value_as_number(s->value);
-        float f = strtof(n->number, NULL);
-        Value *num = makeNumber((float)f);
+        double f = strtod(n->number, NULL);
+        Value *num = makeNumber(f);
         hashmap_put(&(vm->context), key, strlen(key), num);
       }
     }

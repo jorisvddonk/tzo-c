@@ -15,7 +15,7 @@ Value *makeString(char *str)
     return value;
 }
 
-Value *makeNumber(float val)
+Value *makeNumber(double val)
 {
     Value *value = malloc(sizeof *value);
     value->type = Number;
@@ -49,11 +49,11 @@ Value _popS(TzoVM *vm)
     return val;
 }
 
-float asInt_f(Value val)
+double asInt_f(Value val)
 {
-    if (fabsf(roundf(val.number_value) - val.number_value) <= 0.00001f)
+    if (fabs(round(val.number_value) - val.number_value) <= 0.00001)
     {
-        return roundf(val.number_value);
+        return round(val.number_value);
     }
     return val.number_value;
 }
@@ -66,7 +66,7 @@ char *asString(Value val)
     }
     else
     {
-        if (fabsf(roundf(val.number_value) - val.number_value) <= 0.00001f)
+        if (fabs(round(val.number_value) - val.number_value) <= 0.00001)
         {
             size_t needed = snprintf(NULL, 0, "%i", (int)val.number_value) + 1;
             char *buffer = malloc(needed);
@@ -87,6 +87,10 @@ void i_plus(TzoVM *vm)
 {
     Value a = _pop(vm);
     Value b = _pop(vm);
+    if (a.type != Number || b.type != Number)
+    {
+        throw("+: operands must be numbers\n");
+    }
     Value *c = makeNumber(a.number_value + b.number_value);
     _push(vm, *c);
 }
@@ -95,6 +99,10 @@ void i_min(TzoVM *vm)
 {
     Value a = _pop(vm);
     Value b = _pop(vm);
+    if (a.type != Number || b.type != Number)
+    {
+        throw("-: operands must be numbers\n");
+    }
     Value *c = makeNumber(a.number_value - b.number_value);
     _push(vm, *c);
 }
@@ -103,6 +111,10 @@ void i_mul(TzoVM *vm)
 {
     Value a = _pop(vm);
     Value b = _pop(vm);
+    if (a.type != Number || b.type != Number)
+    {
+        throw("*: operands must be numbers\n");
+    }
     Value *c = makeNumber(a.number_value * b.number_value);
     _push(vm, *c);
 }
@@ -149,12 +161,25 @@ void i_pop(TzoVM *vm)
 
 void i_stdout(TzoVM *vm)
 {
+    if (vm->stackSize == 0)
+    {
+        printf("undefined");
+        return;
+    }
     Value a = _pop(vm);
     if (a.type == Number)
     {
-        printf("%f", a.number_value);
+        double f = a.number_value;
+        if (f == (double)(long)f && fabs(f) < 1.0e15)
+        {
+            printf("%ld", (long)f);
+        }
+        else
+        {
+            printf("%g", f);
+        }
     }
-    if (a.type == String)
+    else if (a.type == String)
     {
         printf("%s", a.string_value);
     }
@@ -195,18 +220,45 @@ void i_rconcat(TzoVM *vm)
 void i_charCode(TzoVM *vm)
 {
     Value a = _pop(vm);
-    size_t needed = snprintf(NULL, 0, "%c", (int)a.number_value) + 1;
-    char *buffer = malloc(needed);
-    sprintf(buffer, "%c", (int)a.number_value);
-    Value *b = makeString(buffer);
-    _push(vm, *b);
+    if (a.type != Number)
+    {
+        throw("charCode: operand must be a number\n");
+    }
+    unsigned cp = ((unsigned)(int)a.number_value) & 0xFFFFu;
+    char *s = malloc(4 + 1);
+    int len;
+    if (cp <= 0x7F)
+    {
+        s[0] = (char)cp;
+        len = 1;
+    }
+    else if (cp <= 0x7FF)
+    {
+        s[0] = (char)(0xC0 | (cp >> 6));
+        s[1] = (char)(0x80 | (cp & 0x3F));
+        len = 2;
+    }
+    else
+    {
+        s[0] = (char)(0xE0 | (cp >> 12));
+        s[1] = (char)(0x80 | ((cp >> 6) & 0x3F));
+        s[2] = (char)(0x80 | (cp & 0x3F));
+        len = 3;
+    }
+    s[len] = '\0';
+    _push(vm, *makeString(s));
 }
 
 void i_randInt(TzoVM *vm)
 {
     Value a = _pop(vm);
-    int i = rand() % (int)a.number_value;
-    Value *b = makeNumber((float)i);
+    if (a.type != Number)
+    {
+        throw("randInt: operand must be a number\n");
+    }
+    double r = (double)rand() / (double)RAND_MAX;
+    int i = (int)floor(r * (double)a.number_value);
+    Value *b = makeNumber((double)i);
     _push(vm, *b);
 }
 
@@ -320,8 +372,11 @@ void i_lt(TzoVM *vm)
 void i_jgz(TzoVM *vm)
 {
     Value a = _pop(vm);
-    assert(("jgz: value must be number", a.type == Number));
-    if (asInt_f(a) > 0)
+    if (a.type != Number)
+    {
+        throw("jgz: value must be a number\n");
+    }
+    if (a.number_value > 0.0f)
     {
         vm->ppc += 1;
     }
@@ -330,8 +385,11 @@ void i_jgz(TzoVM *vm)
 void i_jz(TzoVM *vm)
 {
     Value a = _pop(vm);
-    assert(("jz: value must be number", a.type == Number));
-    if (asInt_f(a) == 0)
+    if (a.type != Number)
+    {
+        throw("jz: value must be a number\n");
+    }
+    if (a.number_value == 0.0f)
     {
         vm->ppc += 1;
     }
@@ -378,12 +436,12 @@ void i_not(TzoVM *vm)
 
 void i_ppc(TzoVM *vm)
 {
-    _push(vm, *makeNumber((float)vm->ppc));
+    _push(vm, *makeNumber((double)vm->ppc));
 }
 
 void i_stacksize(TzoVM *vm)
 {
-    _push(vm, *makeNumber((float)vm->stackSize));
+    _push(vm, *makeNumber((double)vm->stackSize));
 }
 
 void i_pause(TzoVM *vm)
@@ -402,7 +460,7 @@ void i_goto(TzoVM *vm)
     Value a = _pop(vm);
     if (a.type == Number)
     {
-        int i = (int)(asInt_f(a)) - 1;
+        int i = (int)a.number_value - 1;
         vm->ppc = i;
     }
     else if (a.type == String)
@@ -410,12 +468,20 @@ void i_goto(TzoVM *vm)
         int i = (int)(long)hashmap_get(&(vm->labelmap), a.string_value, strlen(a.string_value));
         vm->ppc = i - 1;
     }
+    else
+    {
+        throw("goto: target must be a string or number\n");
+    }
 }
 
 void i_setContext(TzoVM *vm)
 {
     Value a = _pop(vm);
     Value b = _pop(vm);
+    if (a.type != String)
+    {
+        throw("setContext: key must be a string\n");
+    }
     char *key = a.string_value;
     if (b.type == String)
     {
@@ -430,14 +496,26 @@ void i_setContext(TzoVM *vm)
 void i_getContext(TzoVM *vm)
 {
     Value a = _pop(vm);
+    if (a.type != String)
+    {
+        throw("getContext: key must be a string\n");
+    }
     char *key = a.string_value;
     Value *val = (Value *)hashmap_get(&(vm->context), a.string_value, strlen(a.string_value));
+    if (val == NULL)
+    {
+        throw("getContext: key not found\n");
+    }
     _push(vm, *val);
 }
 
 void i_hasContext(TzoVM *vm)
 {
     Value a = _pop(vm);
+    if (a.type != String)
+    {
+        throw("hasContext: key must be a string\n");
+    }
     char *key = a.string_value;
     void *const element = hashmap_get(&(vm->context), a.string_value, strlen(a.string_value));
     if (element == NULL)
@@ -453,6 +531,10 @@ void i_hasContext(TzoVM *vm)
 void i_delContext(TzoVM *vm)
 {
     Value a = _pop(vm);
+    if (a.type != String)
+    {
+        throw("delContext: key must be a string\n");
+    }
     char *key = a.string_value;
     hashmap_remove(&(vm->context), a.string_value, strlen(a.string_value));
 }
@@ -498,7 +580,7 @@ void initLabelMapFromJSONObject(TzoVM *vm, struct json_object_s *obj)
         if (json_value_as_number(s->value) != NULL)
         {
             struct json_number_s *n = json_value_as_number(s->value);
-            float f = strtof(n->number, NULL);
+            double f = strtod(n->number, NULL);
             int i = (int)f;
             hashmap_put(&(vm->labelmap), key, strlen(key), (void *)(long)i);
         }

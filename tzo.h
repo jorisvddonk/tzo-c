@@ -34,7 +34,7 @@ typedef struct
 {
   ValueType type;
   char *string_value;
-  float number_value;
+  double number_value;
 } Value;
 
 typedef struct
@@ -76,8 +76,8 @@ Value _pop(TzoVM *vm);
 Value _popS(TzoVM *vm);
 
 Value *makeString(char *str);
-Value *makeNumber(float val);
-float asInt_f(Value val);
+Value *makeNumber(double val);
+double asInt_f(Value val);
 char *asString(Value val);
 
 #endif /* TZO_H */
